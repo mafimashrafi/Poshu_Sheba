@@ -91,60 +91,108 @@ st.markdown(
 
     #MainMenu, header[data-testid="stHeader"], footer {{ visibility: hidden; height: 0; }}
 
-    .block-container {{ padding-top: 1.2rem; max-width: 1360px; }}
+    .block-container {{ padding-top: 1.1rem; padding-bottom: 2rem; max-width: 1360px; }}
 
-    h1, h2, h3 {{ color: {INK}; font-weight: 700; }}
+    h1, h2, h3 {{ color: {INK}; font-weight: 700; letter-spacing: -0.01em; }}
 
-    .stButton > button {{ border-radius: 10px; font-weight: 600; transition: all 0.15s ease; box-shadow: none; }}
+    ::selection {{ background: rgba(20, 184, 166, 0.25); }}
+
+    .stButton > button {{ border-radius: 12px; font-weight: 600; transition: all 0.18s ease; box-shadow: none; }}
+    .stButton > button:hover {{ transform: translateY(-1px); }}
+    .stButton > button:active {{ transform: translateY(0); }}
 
     /* ---- Header ---- */
-    div.st-key-app_header {{ border-bottom: 1px solid rgba(11, 37, 69, 0.08); padding-bottom: 0.9rem; margin-bottom: 1.6rem; }}
-    div.st-key-header_saved button, div.st-key-header_login button {{ border-radius: 999px; }}
-    div.st-key-header_saved button {{ background: transparent; border: 1px solid rgba(11,37,69,0.15); color: {INK}; }}
-    div.st-key-header_login button {{ background: {TEAL}; border: none; box-shadow: 0 4px 14px rgba(20,184,166,0.35); }}
+    div.st-key-app_header {{
+        background: #FFFFFF; border-radius: 18px; padding: 0.8rem 1.4rem; margin-bottom: 1.8rem;
+        box-shadow: 0 2px 16px rgba(11, 37, 69, 0.05); border: 1px solid rgba(11, 37, 69, 0.04);
+    }}
+    div.st-key-logo_brand {{ position: relative; }}
+    div.st-key-logo_brand .st-key-logo_home_btn {{ position: absolute; inset: 0; z-index: 5; }}
+    div.st-key-logo_brand .st-key-logo_home_btn button {{
+        width: 100%; height: 100%; min-height: 48px; opacity: 0; cursor: pointer; padding: 0;
+    }}
+    div.st-key-header_saved button {{
+        background: transparent; border: 1px solid rgba(11, 37, 69, 0.14); color: {INK}; border-radius: 999px;
+    }}
+    div.st-key-header_saved button:hover {{ border-color: {TEAL}; color: {TEAL}; background: {TEAL_TINT}; }}
+    div.st-key-header_login button {{
+        background: linear-gradient(135deg, #14B8A6, #0D9488); border: none; border-radius: 999px;
+        box-shadow: 0 6px 16px rgba(20, 184, 166, 0.32);
+    }}
+    div.st-key-header_login button:hover {{ box-shadow: 0 8px 20px rgba(20, 184, 166, 0.42); }}
 
     /* ---- Sidebar nav pills ---- */
     div.st-key-sidebar_nav .stButton > button {{
         background: transparent; border: none; text-align: left; justify-content: flex-start;
-        color: {MUTED}; font-weight: 500; padding: 0.55rem 0.8rem; border-radius: 10px;
+        color: {MUTED}; font-weight: 500; padding: 0.6rem 0.9rem; border-radius: 11px;
     }}
-    div.st-key-sidebar_nav .stButton > button:hover {{ background: {TEAL_TINT}; color: {TEAL}; }}
+    div.st-key-sidebar_nav .stButton > button:hover {{ background: {TEAL_TINT}; color: {TEAL}; transform: none; }}
     div.st-key-sidebar_nav button[kind="primary"] {{
         background: {TEAL_TINT}; color: {TEAL}; font-weight: 700; box-shadow: none;
+        border-left: 3px solid {TEAL};
     }}
 
     /* ---- Cards ---- */
     div.st-key-reminder_card, div.st-key-saved_panel, div.st-key-card_image, div.st-key-card_audio,
     div.st-key-response_card {{
-        background: #FFFFFF; border-radius: 18px; padding: 1.3rem 1.2rem;
-        box-shadow: 0 2px 14px rgba(11, 37, 69, 0.06); border: 1px solid rgba(11,37,69,0.05);
+        background: #FFFFFF; border-radius: 18px; padding: 1.35rem 1.25rem;
+        box-shadow: 0 2px 16px rgba(11, 37, 69, 0.055); border: 1px solid rgba(11, 37, 69, 0.045);
     }}
-    div.st-key-card_image, div.st-key-card_audio {{ text-align: center; }}
+    div.st-key-card_image, div.st-key-card_audio {{
+        text-align: center; transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }}
+    div.st-key-card_image:hover, div.st-key-card_audio:hover {{
+        box-shadow: 0 8px 24px rgba(11, 37, 69, 0.09); transform: translateY(-2px);
+    }}
     div.st-key-saved_locked {{ background: #FAFBFC; border-radius: 14px; padding: 1rem 1rem 1.4rem; margin-top: 0.4rem; }}
 
     .upload-icon-circle {{
-        width: 52px; height: 52px; border-radius: 50%; background: {TEAL_TINT};
-        display: flex; align-items: center; justify-content: center; margin: 0 auto 0.6rem;
+        width: 54px; height: 54px; border-radius: 50%; background: {TEAL_TINT};
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 0.65rem;
     }}
     .upload-card-title {{ font-weight: 700; color: {INK}; margin-bottom: 0.2rem; }}
     .upload-card-sub {{ color: {MUTED}; font-size: 0.82rem; margin-bottom: 0.8rem; }}
 
     .section-divider {{
-        background: {TEAL_TINT}; color: {TEAL}; text-align: center; padding: 0.65rem;
-        border-radius: 10px; font-weight: 700; margin: 1.3rem 0 1.1rem;
+        background: {TEAL_TINT}; color: {TEAL}; text-align: center; padding: 0.7rem;
+        border-radius: 11px; font-weight: 700; margin: 1.4rem 0 1.2rem; letter-spacing: 0.01em;
     }}
     .or-divider {{
-        display: flex; align-items: center; gap: 0.9rem; color: {MUTED}; font-size: 0.9rem; margin: 1.5rem 0 1rem;
+        display: flex; align-items: center; gap: 0.9rem; color: {MUTED}; font-size: 0.88rem; margin: 1.6rem 0 1.1rem;
     }}
     .or-divider::before, .or-divider::after {{ content: ""; flex: 1; height: 1px; background: rgba(11,37,69,0.1); }}
 
     .info-bar {{
         display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-        color: {MUTED}; font-size: 0.85rem; margin-top: 1.4rem;
+        color: {MUTED}; font-size: 0.84rem; margin-top: 1.5rem;
     }}
 
+    /* ---- Ask form controls ---- */
+    div.st-key-ask_submit button {{
+        background: linear-gradient(135deg, #14B8A6, #0D9488); border: none; border-radius: 999px;
+        box-shadow: 0 6px 16px rgba(20, 184, 166, 0.32);
+    }}
+    div.st-key-ask_submit button:hover {{ box-shadow: 0 8px 20px rgba(20, 184, 166, 0.42); }}
+    div.st-key-quick_image_hint button, div.st-key-quick_audio_hint button {{
+        background: {BG}; border: 1px solid rgba(11, 37, 69, 0.08); border-radius: 50%;
+        width: 42px; height: 42px; padding: 0;
+    }}
+    div.st-key-quick_image_hint button:hover, div.st-key-quick_audio_hint button:hover {{
+        background: {TEAL_TINT}; border-color: {TEAL};
+    }}
+    div.st-key-save_response_btn button {{ border-radius: 999px; }}
+    .stTextArea textarea {{ border-radius: 14px; }}
+    [data-testid="stFileUploaderDropzone"] {{ border-radius: 12px; }}
+
     /* ---- Saved response items ---- */
-    div[class*="st-key-saved_item_"] {{ border-radius: 12px !important; margin-bottom: 0.6rem; padding: 0.8rem !important; }}
+    div[class*="st-key-saved_item_"] {{
+        border-radius: 12px !important; margin-bottom: 0.6rem !important; padding: 0.85rem !important;
+        transition: box-shadow 0.15s ease;
+    }}
+    div[class*="st-key-saved_item_"]:hover {{ box-shadow: 0 3px 12px rgba(11, 37, 69, 0.08); }}
+
+    /* ---- Footer ---- */
+    .app-footer {{ color: {MUTED}; }}
     </style>
     """,
     unsafe_allow_html=True,

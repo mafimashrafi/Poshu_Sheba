@@ -27,24 +27,28 @@ def render_header(on_open_login: Callable[[], None]) -> None:
         )
 
         with logo_col:
-            brand_logo, brand_text = st.columns([1, 5], vertical_alignment="center")
-            with brand_logo:
-                if LOGO_PATH.exists():
-                    st.image(str(LOGO_PATH), width=42)
-            with brand_text:
-                st.markdown(
-                    f"""
-                    <div style="line-height:1.15;">
-                        <span style="font-size:1.35rem;font-weight:800;color:{INK};">
-                            vet<span style="color:#14B8A6;">.ai</span>
-                        </span><br/>
-                        <span style="font-size:0.6rem;letter-spacing:0.07em;color:{MUTED};font-weight:600;">
-                            SMART CARE. HEALTHIER PETS.
-                        </span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            with st.container(key="logo_brand"):
+                brand_logo, brand_text = st.columns([1, 5], vertical_alignment="center")
+                with brand_logo:
+                    if LOGO_PATH.exists():
+                        st.image(str(LOGO_PATH), width=42)
+                with brand_text:
+                    st.markdown(
+                        f"""
+                        <div style="line-height:1.15;">
+                            <span style="font-size:1.4rem;font-weight:800;color:{INK};letter-spacing:-0.01em;">
+                                vet<span style="color:#14B8A6;">.ai</span>
+                            </span><br/>
+                            <span style="font-size:0.6rem;letter-spacing:0.08em;color:{MUTED};font-weight:600;">
+                                SMART CARE. HEALTHIER PETS.
+                            </span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                if st.button(" ", key="logo_home_btn", help="হোম পেজে যান"):
+                    st.session_state.nav_page = "home"
+                    st.rerun()
 
         with saved_col:
             if st.button(
