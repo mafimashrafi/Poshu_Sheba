@@ -44,7 +44,7 @@ def render_header(on_open_login: Callable[[], None]) -> None:
                         """,
                         unsafe_allow_html=True,
                     )
-                if st.button(" ", key="logo_home_btn", help="হোম পেজে যান"):
+                if st.button(" ", key="logo_home_btn", help="হোম পেজে যান", use_container_width=True):
                     st.session_state.nav_page = "home"
                     st.rerun()
 

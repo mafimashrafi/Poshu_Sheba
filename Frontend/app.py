@@ -1,6 +1,7 @@
 import streamlit as st
 
 from components.header import render_header
+from components.mascot import render_walking_cow
 from components.saved_panel import render_saved_panel
 from components.sidebar import render_sidebar
 from utils import api_client
@@ -24,6 +25,7 @@ _DEFAULTS = {
     "nav_page": "home",
     "chat_response": None,
     "response_saved": False,
+    "audio_version": 0,
 }
 for _key, _value in _DEFAULTS.items():
     if _key not in st.session_state:
@@ -108,7 +110,14 @@ st.markdown(
         box-shadow: 0 2px 16px rgba(11, 37, 69, 0.05); border: 1px solid rgba(11, 37, 69, 0.04);
     }}
     div.st-key-logo_brand {{ position: relative; }}
-    div.st-key-logo_brand .st-key-logo_home_btn {{ position: absolute; inset: 0; z-index: 5; }}
+    div.st-key-logo_brand .st-key-logo_home_btn {{
+        position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
+        z-index: 5;
+    }}
+    div.st-key-logo_brand .st-key-logo_home_btn > div,
+    div.st-key-logo_brand .st-key-logo_home_btn [data-testid="stElementContainer"] {{
+        width: 100% !important; height: 100% !important;
+    }}
     div.st-key-logo_brand .st-key-logo_home_btn button {{
         width: 100%; height: 100%; min-height: 48px; opacity: 0; cursor: pointer; padding: 0;
     }}
@@ -178,6 +187,11 @@ st.markdown(
         background: {TEAL_TINT}; border-color: {TEAL};
     }}
     div.st-key-save_response_btn button {{ border-radius: 999px; }}
+    div.st-key-remove_audio_btn button {{
+        background: transparent; border: none; color: #C0392B; font-weight: 500;
+        font-size: 0.82rem; padding: 0.3rem; margin-top: 0.3rem; box-shadow: none;
+    }}
+    div.st-key-remove_audio_btn button:hover {{ background: rgba(192, 57, 43, 0.08); transform: none; }}
     .stTextArea textarea {{ border-radius: 14px; }}
     [data-testid="stFileUploaderDropzone"] {{ border-radius: 12px; }}
 
@@ -204,6 +218,7 @@ def open_login_dialog() -> None:
 # Header
 # -----------------------------
 render_header(on_open_login=open_login_dialog)
+render_walking_cow()
 
 # -----------------------------
 # Body layout
@@ -262,7 +277,17 @@ with main_col:
                     """,
                     unsafe_allow_html=True,
                 )
-                st.audio_input("অডিও", key="ask_audio", label_visibility="collapsed")
+                audio_key = f"ask_audio_{st.session_state.audio_version}"
+                st.audio_input("অডিও", key=audio_key, label_visibility="collapsed")
+                if st.session_state.get(audio_key) is not None:
+                    if st.button(
+                        "অডিও সরিয়ে ফেলুন",
+                        key="remove_audio_btn",
+                        icon=":material/close:",
+                        use_container_width=True,
+                    ):
+                        st.session_state.audio_version += 1
+                        st.rerun()
 
         st.markdown('<div class="or-divider">অথবা লিখিতভাবে জানান</div>', unsafe_allow_html=True)
 
@@ -294,7 +319,7 @@ with main_col:
         if submitted:
             text_val = (st.session_state.get("ask_text") or "").strip()
             images_val = st.session_state.get("ask_images") or []
-            audio_val = st.session_state.get("ask_audio")
+            audio_val = st.session_state.get(f"ask_audio_{st.session_state.audio_version}")
             try:
                 with st.spinner("AI উত্তর তৈরি করছে..."):
                     response_text = api_client.generate(text_val, images_val, audio_val)

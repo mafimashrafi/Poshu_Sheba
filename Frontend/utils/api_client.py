@@ -10,8 +10,13 @@ import requests
 
 API_URL = "http://127.0.0.1:8000"
 TIMEOUT = 60
+# /generate transcribes audio (faster-whisper) and runs the Ollama model, which can
+# take minutes on CPU or on a cold model load. A short timeout here surfaces as a
+# generic "can't connect" error even though the backend is working fine.
+GENERATE_TIMEOUT = 300
 
 CONNECTION_ERROR = "সার্ভারের সাথে সংযোগ করা যায়নি। ব্যাকএন্ড চালু আছে কিনা দেখুন এবং আবার চেষ্টা করুন।"
+TIMEOUT_ERROR = "AI উত্তর তৈরি করতে স্বাভাবিকের চেয়ে বেশি সময় নিচ্ছে। কিছুক্ষণ পর আবার চেষ্টা করুন।"
 
 
 class ApiError(Exception):
@@ -79,8 +84,10 @@ def generate(text: str, images: list, audio) -> str:
             f"{API_URL}/generate",
             data={"text": text} if text else None,
             files=files or None,
-            timeout=TIMEOUT,
+            timeout=GENERATE_TIMEOUT,
         )
+    except requests.exceptions.Timeout:
+        raise ApiError(TIMEOUT_ERROR)
     except requests.exceptions.RequestException:
         raise ApiError(CONNECTION_ERROR)
 
