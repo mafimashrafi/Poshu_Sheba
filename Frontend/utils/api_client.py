@@ -1,0 +1,124 @@
+"""Thin wrapper around the Poshu Sheba AI FastAPI backend.
+
+Every function raises ApiError with a ready-to-display Bangla message on
+failure, so UI code never has to parse response bodies itself.
+"""
+
+from typing import Any, Optional
+
+import requests
+
+API_URL = "http://127.0.0.1:8000"
+TIMEOUT = 60
+
+CONNECTION_ERROR = "সার্ভারের সাথে সংযোগ করা যায়নি। ব্যাকএন্ড চালু আছে কিনা দেখুন এবং আবার চেষ্টা করুন।"
+
+
+class ApiError(Exception):
+    """Carries a Bangla message safe to show directly to the user."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class SessionExpiredError(ApiError):
+    """Raised when a bearer token is missing, invalid, or expired."""
+
+
+def _detail(response: requests.Response, fallback: str) -> str:
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        detail = None
+    return detail or fallback
+
+
+def register(name: Optional[str], phone_number: str, password: str) -> dict[str, Any]:
+    try:
+        response = requests.post(
+            f"{API_URL}/register",
+            json={"name": name, "phone_number": phone_number, "password": password},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code != 201:
+        raise ApiError(_detail(response, "অ্যাকাউন্ট তৈরি করা যায়নি। তথ্যগুলো আবার যাচাই করুন।"))
+    return response.json()
+
+
+def login(phone_number: str, password: str) -> dict[str, Any]:
+    try:
+        response = requests.post(
+            f"{API_URL}/login",
+            json={"phone_number": phone_number, "password": password},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "লগ ইন ব্যর্থ হয়েছে। ফোন নম্বর ও পাসওয়ার্ড আবার দেখুন।"))
+    return response.json()
+
+
+def generate(text: str, images: list, audio) -> str:
+    if not text and not images and audio is None:
+        raise ApiError("লিখিত তথ্য, ছবি অথবা অডিও এর যেকোনো একটি দিন।")
+
+    files: list[tuple[str, tuple[str, bytes, str]]] = []
+    for image in images:
+        files.append(("images", (image.name, image.getvalue(), image.type or "application/octet-stream")))
+    if audio is not None:
+        files.append(("audio", (audio.name or "audio.wav", audio.getvalue(), audio.type or "audio/wav")))
+
+    try:
+        response = requests.post(
+            f"{API_URL}/generate",
+            data={"text": text} if text else None,
+            files=files or None,
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "এই মুহূর্তে উত্তর তৈরি করা যায়নি। আবার চেষ্টা করুন।"))
+    return response.json()["response"]
+
+
+def save_response(token: str, response_text: str) -> dict[str, Any]:
+    try:
+        response = requests.post(
+            f"{API_URL}/save-response",
+            json={"response": response_text},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code == 401:
+        raise SessionExpiredError("আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। আবার লগ ইন করুন।")
+    if response.status_code != 201:
+        raise ApiError(_detail(response, "উত্তর সংরক্ষণ করা যায়নি।"))
+    return response.json()
+
+
+def get_saved_responses(token: str) -> list[dict[str, Any]]:
+    try:
+        response = requests.get(
+            f"{API_URL}/saved-responses",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code == 401:
+        raise SessionExpiredError("আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। আবার লগ ইন করুন।")
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "সংরক্ষিত উত্তর লোড করা যায়নি।"))
+    return response.json()["responses"]
