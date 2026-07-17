@@ -1,17 +1,11 @@
 import base64
 from typing import Optional
-import os
-import subprocess
-import tempfile
 
-import imageio_ffmpeg
+from Middleware.Audio2Text import AudioConversionError, transcribe_audio
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 import ollama
-import requests
-
 
 app = FastAPI()
-
 
 @app.post("/generate")
 async def generate(
@@ -26,113 +20,42 @@ async def generate(
         )
 
     images_b64: list[str] = []
-    wav_b64 = None
+    audio_transcript: Optional[str] = None
 
     if images:
         for img in images:
             raw = await img.read()
             images_b64.append(base64.b64encode(raw).decode("utf-8"))
+
     if audio is not None:
         raw = await audio.read()
-
-        _, extension = os.path.splitext(audio.filename)
-        if not extension:
-            extension = ".mp3"
-
-        mp_path = None
-        wav_path = None
-
         try:
-            # Save uploaded audio
-            with tempfile.NamedTemporaryFile(
-                    suffix=extension,
-                    delete=False
-            ) as input_file:
-                input_file.write(raw)
-                mp_path = input_file.name
+            audio_transcript = transcribe_audio(raw, audio.filename, language="bn")
+        except AudioConversionError as e:
+            raise HTTPException(status_code=500, detail=f"অডিও প্রসেস করায় সমস্যা হয়েছে। দয়া করে কথায় লিখুন। \ন {str(e)}")
 
-            # Temporary wav output
-            with tempfile.NamedTemporaryFile(
-                    suffix=".wav",
-                    delete=False
-            ) as output_file:
-                wav_path = output_file.name
+    content_parts = []
+    if text:
+        content_parts.append(text)
+    if audio_transcript:
+        content_parts.append(
+            "[Audio transcript — note: this was transcribed from Bengali "
+            "(Bangla) speech using automatic speech recognition, which "
+            "sometimes mistakenly renders Bangla in Hindi wording/script "
+            "due to phonetic similarity. Interpret the following as "
+            f"Bengali speech and reply entirely in Bengali]: {audio_transcript}")
+    content = "\n\n".join(content_parts)
+    print(content)
 
-            ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-
-            result = subprocess.run(
-                [
-                    ffmpeg,
-                    "-y",
-                    "-i", mp_path,
-                    "-ar", "16000",
-                    "-ac", "1",
-                    "-c:a", "pcm_s16le",
-                    wav_path,
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-
-            print(result.stderr)
-
-            if not os.path.exists(wav_path):
-                raise HTTPException(
-                    status_code=500,
-                    detail="WAV file was not created."
-                )
-
-            with open(wav_path, "rb") as f:
-                wav_bytes = f.read()
-
-            wav_b64 = base64.b64encode(wav_bytes).decode("utf-8")
-
-            print("Original bytes:", len(raw))
-            print("WAV bytes:", len(wav_bytes))
-            print("WAV Base64 length:", len(wav_b64))
-
-        except subprocess.CalledProcessError as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"FFmpeg failed:\n{e.stderr}"
-            )
-
-        finally:
-            if mp_path and os.path.exists(mp_path):
-                os.remove(mp_path)
-
-            if wav_path and os.path.exists(wav_path):
-                os.remove(wav_path)
-
-    print("Original bytes:", len(raw))
-    print("WAV Base64 length:", len(wav_b64) if wav_b64 else 0)
-
-    message = {
-        "role": "user",
-        "content": text or "",
-    }
-
+    message = {"role": "user", "content": content}
     if images_b64:
         message["images"] = images_b64
 
-    if wav_b64:
-        message["audio"] = [wav_b64]
-
-    print(message.keys())
-
-    payload = {
-        "model": "gemma4:e4b-it-q4_K_M",
-        "messages": [message],
-        "stream": False,
-    }
-
-    r = requests.post(
-        "http://localhost:11434/api/chat",
-        json=payload,
-    )
-
-    print(r.status_code)
-    print(r.text)
-
-    return r.json()
+    try:
+        response = ollama.chat(model="gemma4:e4b-it-q4_K_M", messages=[
+            message])
+    except ollama.ResponseError as e:
+        raise HTTPException( status_code=e.status_code or 502, detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}", )
+    except ollama.RequestError as e:
+        raise HTTPException( status_code=503, detail=f"AI পর্যন্ত কল যায়নি। বিকল্প উপায় দেখুন।\n{str(e)}", )
+    return {"response": response["message"]["content"]}
