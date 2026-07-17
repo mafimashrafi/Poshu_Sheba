@@ -83,8 +83,9 @@ st.markdown(
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
 
-    html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
-        font-family: 'Inter', 'Noto Sans Bengali', -apple-system, sans-serif;
+    html, body, [class*="css"], [data-testid="stAppViewContainer"],
+    *:not([data-testid="stIconMaterial"]), *::before, *::after {{
+        font-family: 'Inter', 'Noto Sans Bengali', -apple-system, sans-serif !important;
     }}
 
     [data-testid="stAppViewContainer"] {{ background: {BG}; }}
@@ -111,10 +112,6 @@ st.markdown(
     div.st-key-logo_brand .st-key-logo_home_btn button {{
         width: 100%; height: 100%; min-height: 48px; opacity: 0; cursor: pointer; padding: 0;
     }}
-    div.st-key-header_saved button {{
-        background: transparent; border: 1px solid rgba(11, 37, 69, 0.14); color: {INK}; border-radius: 999px;
-    }}
-    div.st-key-header_saved button:hover {{ border-color: {TEAL}; color: {TEAL}; background: {TEAL_TINT}; }}
     div.st-key-header_login button {{
         background: linear-gradient(135deg, #14B8A6, #0D9488); border: none; border-radius: 999px;
         box-shadow: 0 6px 16px rgba(20, 184, 166, 0.32);
@@ -219,11 +216,13 @@ with sidebar_col:
 
 with main_col:
     if nav_page == "home":
+        leaf = icon("leaf", color=TEAL, size=22)
         st.markdown(
             f"""
             <div style="text-align:center;margin-bottom:0.6rem;">
-                <h1 style="margin-bottom:0.2rem;">
-                    🌿&nbsp; পশু সেবা AI এ <span style="color:{TEAL};">আপনাকে স্বাগতম</span> &nbsp;🌿
+                <h1 style="margin-bottom:0.2rem;line-height:1.3;">
+                    {leaf}&nbsp;পশু সেবা AI এ<br/>
+                    <span style="color:{TEAL};">আপনাকে স্বাগতম</span>&nbsp;{leaf}
                 </h1>
                 <p style="color:{MUTED};font-size:1.02rem;">
                     আপনার পশুর সমস্যা লিখুন, ছবি দিন বা কথা বলুন — আমাদের AI সহকারী দ্রুত পরামর্শ দেবে।

@@ -1,4 +1,4 @@
-"""Top header: brand lockup, saved-data shortcut, notifications, account menu."""
+"""Top header: brand lockup and account menu."""
 
 from pathlib import Path
 from typing import Callable
@@ -19,12 +19,10 @@ def _mask_phone(phone: str) -> str:
 
 def render_header(on_open_login: Callable[[], None]) -> None:
     logged_in = bool(st.session_state.get("token"))
-    ratios = [3.2, 4.8, 1.9, 0.6, 1.6] if logged_in else [3.2, 3.6, 1.9, 0.6, 2.8]
+    ratios = [3.2, 6.4, 1.6] if logged_in else [3.2, 5.2, 2.8]
 
     with st.container(key="app_header"):
-        logo_col, _spacer_col, saved_col, bell_col, account_col = st.columns(
-            ratios, vertical_alignment="center"
-        )
+        logo_col, _spacer_col, account_col = st.columns(ratios, vertical_alignment="center")
 
         with logo_col:
             with st.container(key="logo_brand"):
@@ -49,20 +47,6 @@ def render_header(on_open_login: Callable[[], None]) -> None:
                 if st.button(" ", key="logo_home_btn", help="হোম পেজে যান"):
                     st.session_state.nav_page = "home"
                     st.rerun()
-
-        with saved_col:
-            if st.button(
-                "পুরনো সংরক্ষিত তথ্য দেখুন",
-                key="header_saved",
-                icon=":material/bookmark:",
-                use_container_width=True,
-            ):
-                st.session_state.nav_page = "saved"
-                st.rerun()
-
-        with bell_col:
-            with st.popover(" ", icon=":material/notifications:", use_container_width=True):
-                st.caption("কোনো নতুন বিজ্ঞপ্তি নেই।")
 
         with account_col:
             if logged_in:
