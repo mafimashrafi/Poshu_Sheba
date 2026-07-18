@@ -1,6 +1,6 @@
 import sys
 
-from Middleware.Audio2Text import AudioConversionError, transcribe_audio
+from services.audio import AudioConversionError, transcribe_audio
 
 
 def main():

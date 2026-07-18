@@ -25,11 +25,17 @@ The backend is organised as follows:
 
 | Location | Responsibility |
 | --- | --- |
-| `Backend/main.py` | Application startup, database connection, routes, sessions, and AI generation flow |
-| `Backend/Middleware/UserSchemas.py` | Request validation and Bangladesh phone-number normalisation |
-| `Backend/Middleware/Security.py` | Password hashing, password verification, and session-token hashing |
-| `Backend/Middleware/SavedResponses.py` | MongoDB operations for saved responses |
-| `Backend/Middleware/Audio2Text.py` | Audio conversion and Bengali speech transcription |
+| `Backend/main.py` | FastAPI application factory (creates app, sets lifespan, includes routers, and root `/` check) |
+| `Backend/core/config.py` | Environment configuration loading (`.env` path parsing) |
+| `Backend/core/security.py` | Password hashing, password verification, and session-token hashing |
+| `Backend/db/mongodb.py` | MongoDB connection lifespan management, index creation, and saved responses database helpers |
+| `Backend/models/user.py` | Pydantic models for user registration (`UserRegisterRequest`) and login (`LoginRequest`) |
+| `Backend/models/response.py` | Pydantic model for saving a response (`SaveResponseRequest`) |
+| `Backend/routers/auth.py` | Endpoints for user registration (`/register`) and login (`/login`) |
+| `Backend/routers/responses.py` | Endpoints for saving and retrieving generated guidance responses (`/save-response`, `/saved-responses`) |
+| `Backend/routers/generate.py` | Endpoint for veterinary guidance generation (`/generate`) |
+| `Backend/services/audio.py` | Audio conversion using FFmpeg and transcription using faster-whisper |
+| `Backend/services/ai.py` | Ollama client chat wrapper containing system prompts and model config |
 
 ## Requirements
 
