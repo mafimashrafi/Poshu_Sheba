@@ -1,6 +1,7 @@
 from typing import Optional
 import ollama
 from fastapi import HTTPException
+from core import config
 
 
 def generate_guidance(
@@ -8,6 +9,7 @@ def generate_guidance(
     images_b64: list[str],
     audio_transcript: Optional[str],
 ) -> str:
+
     content_parts = ["তুমি একজন অভিজ্ঞ ও দক্ষ পশু চিকিৎসক (ভেটেরিনারিয়ান), যিনি বাংলাদেশের সাধারণ মানুষ ও কৃষকদের"
                     "জন্য প্রাথমিক পশু স্বাস্থ্যসেবা পরামর্শ দিচ্ছেন। তোমার নাম 'পশু সেবা AI'।"
                     
@@ -60,7 +62,7 @@ def generate_guidance(
         message["images"] = images_b64
 
     try:
-        response = ollama.chat(model="gemma4:e4b-it-q4_K_M", messages=[
+        response = ollama.chat(model=config.OLLAMA_MODEL, messages=[
             message])
     except ollama.ResponseError as e:
         raise HTTPException( status_code=e.status_code or 502, detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}", )

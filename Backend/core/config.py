@@ -7,3 +7,5 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DB = os.getenv("MONGODB_DB")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e4b-it-q4_K_M")
+
