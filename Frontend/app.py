@@ -99,7 +99,46 @@ def profile_dialog() -> None:
     name = st.text_input("নাম", value=profile.get("name") or "", placeholder="আপনার নাম লিখুন")
     address = st.text_input("ঠিকানা", value=profile.get("address") or "", placeholder="আপনার ঠিকানা লিখুন")
     email = st.text_input("ইমেইল (ঐচ্ছিক)", value=profile.get("email") or "", placeholder="আপনার ইমেইল লিখুন")
-    profile_pic = st.text_input("প্রোফাইল ছবির লিংক (ঐচ্ছিক)", value=profile.get("profile_picture_url") or "", placeholder="ছবির ইউআরএল দিন")
+    
+    # Render preview
+    avatar_url = profile.get("profile_picture_url")
+    if avatar_url:
+        st.image(avatar_url, width=100, caption="বর্তমান ছবি")
+    else:
+        st.markdown(
+            """
+            <div style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border-radius: 50%; background-color: #E2E8F0; color: #718096; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.8rem;">
+                👤
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # File uploader
+    uploaded_pic = st.file_uploader(
+        "প্রোফাইল ছবি",
+        type=["jpg", "jpeg", "png", "webp"],
+        key="profile_pic_uploader"
+    )
+
+    # If a new file is uploaded, upload it to the backend immediately
+    if uploaded_pic is not None:
+        last_uploaded_name = st.session_state.get("last_uploaded_profile_pic_name")
+        if last_uploaded_name != uploaded_pic.name:
+            try:
+                with st.spinner("ছবি আপলোড হচ্ছে..."):
+                    res = api_client.upload_profile_picture(
+                        token=token,
+                        file_bytes=uploaded_pic.getvalue(),
+                        filename=uploaded_pic.name,
+                        mime_type=uploaded_pic.type
+                    )
+                st.session_state.profile_data["profile_picture_url"] = res["profile_picture_url"]
+                st.session_state.last_uploaded_profile_pic_name = uploaded_pic.name
+                st.toast("প্রোফাইল ছবি আপলোড করা হয়েছে!", icon="📸")
+                st.rerun()
+            except api_client.ApiError as exc:
+                st.error(exc.message)
 
     st.markdown("### খামারের তথ্য (ফসল ও পশুর বিবরণ)")
 
@@ -161,7 +200,7 @@ def profile_dialog() -> None:
                     "name": name.strip() or None,
                     "address": address.strip(),
                     "email": email.strip() or None,
-                    "profile_picture_url": profile_pic.strip() or None,
+                    "profile_picture_url": profile.get("profile_picture_url"),
                     "farms": updated_farms
                 }
 

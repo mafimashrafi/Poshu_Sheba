@@ -182,3 +182,23 @@ def delete_account(token: str) -> dict[str, Any]:
         raise ApiError(_detail(response, "অ্যাকাউন্ট মুছে ফেলা সম্ভব হয়নি।"))
     return response.json()
 
+
+def upload_profile_picture(token: str, file_bytes: bytes, filename: str, mime_type: str) -> dict[str, Any]:
+    try:
+        files = {"file": (filename, file_bytes, mime_type or "application/octet-stream")}
+        response = requests.post(
+            f"{API_URL}/profile/picture",
+            files=files,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code == 401:
+        raise SessionExpiredError("আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। আবার লগ ইন করুন।")
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "প্রোফাইল ছবি আপলোড করা যায়নি।"))
+    return response.json()
+
+

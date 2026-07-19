@@ -1,13 +1,16 @@
 import secrets
+import os
+import io
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, HTTPException, Request, status
+from pathlib import Path
+from PIL import Image, UnidentifiedImageError
+from fastapi import APIRouter, HTTPException, Request, status, Depends, UploadFile, File
 from pymongo.errors import DuplicateKeyError
 
 from typing import Annotated, Any
 from models.user import UserRegisterRequest, LoginRequest, ProfileUpdateRequest
 from core.security import hash_password, verify_password, hash_session_token
 from routers.responses import require_active_session
-from fastapi import APIRouter, HTTPException, Request, status, Depends
 
 router = APIRouter()
 
@@ -193,5 +196,77 @@ async def logout(
     phone_number = session["phone_number"]
     db.sessions.delete_many({"phone_number": phone_number})
     return {"message": "Logged out from all sessions successfully"}
+
+
+@router.post("/profile/picture")
+async def upload_profile_picture(
+    request: Request,
+    file: UploadFile = File(...),
+    session: Annotated[dict[str, Any], Depends(require_active_session)] = None,
+):
+    """Upload a profile picture for the authenticated user, validating file type and size."""
+    db = request.app.state.db
+
+    # 1. Fetch user to obtain ID and check existing picture
+    user = db.users.find_one({"phone_number": session["phone_number"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id_str = str(user["_id"])
+
+    # 2. Check extension and MIME type
+    filename = file.filename or ""
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_exts = {".jpg", ".jpeg", ".png", ".webp"}
+    allowed_types = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+
+    if ext not in allowed_exts or file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Only jpg, jpeg, png, and webp images are allowed")
+
+    # 3. Read content to validate size (max 5 MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds the 5 MB limit")
+
+    # 4. Verify image integrity with Pillow
+    try:
+        img = Image.open(io.BytesIO(content))
+        img.verify()
+    except (UnidentifiedImageError, IOError, SyntaxError):
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    # 5. Delete existing old profile picture if any
+    old_url = user.get("profile_picture_url")
+    if old_url and "/uploads/profile_pictures/" in old_url:
+        old_filename = old_url.split("/uploads/profile_pictures/")[-1]
+        old_filepath = Path(__file__).resolve().parent.parent / "uploads" / "profile_pictures" / old_filename
+        if old_filepath.exists() and old_filepath.is_file():
+            try:
+                os.remove(old_filepath)
+            except Exception as e:
+                # Tolerate deletion error
+                pass
+
+    # 6. Save the new file uniquely
+    new_filename = f"{user_id_str}{ext}"
+    uploads_dir = Path(__file__).resolve().parent.parent / "uploads" / "profile_pictures"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    filepath = uploads_dir / new_filename
+
+    try:
+        with open(filepath, "wb") as f:
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save profile picture: {str(e)}")
+
+    # 7. Update database with fully qualified URL
+    full_url = f"{request.base_url}uploads/profile_pictures/{new_filename}"
+    db.users.update_one(
+        {"phone_number": session["phone_number"]},
+        {"$set": {"profile_picture_url": full_url}}
+    )
+
+    return {"message": "Profile picture updated successfully", "profile_picture_url": full_url}
+
 
 
