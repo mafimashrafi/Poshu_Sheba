@@ -61,7 +61,8 @@ def render_header(on_open_login: Callable[[], None], on_open_profile: Callable[[
                         icon=":material/manage_accounts:",
                         use_container_width=True,
                     ):
-                        on_open_profile()
+                        st.session_state.show_profile_dialog = True
+                        st.rerun()
                     if st.button(
                         "লগ আউট",
                         key="header_logout",

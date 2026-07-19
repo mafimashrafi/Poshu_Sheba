@@ -214,7 +214,7 @@ def profile_dialog() -> None:
                     st.session_state.show_delete_confirm = False
                     # No st.rerun() here to keep the dialog open and go back to the profile form
         else:
-            col_save, col_delete = st.columns([7, 3])
+            col_save, col_delete = st.columns([5.8, 4.2])
             with col_save:
                 if st.button("তথ্য সংরক্ষণ করুন", key="profile_save_btn", type="primary", use_container_width=True):
                     payload = {
@@ -270,8 +270,8 @@ st.markdown(
     div[data-testid="stDialog"] div[role="dialog"],
     div[data-testid="stDialog"] div[class*="stDialog"],
     div[role="dialog"] {{
-        max-width: 820px !important;
-        width: 820px !important;
+        max-width: 880px !important;
+        width: 880px !important;
     }}
 
     div[class*="st-key-profile_save_btn"] button {{
@@ -491,6 +491,11 @@ def open_profile_dialog() -> None:
 # Header
 # -----------------------------
 render_header(on_open_login=open_login_dialog, on_open_profile=open_profile_dialog)
+
+if st.session_state.get("show_profile_dialog"):
+    st.session_state.show_profile_dialog = False
+    open_profile_dialog()
+
 render_walking_cow()
 
 # -----------------------------
