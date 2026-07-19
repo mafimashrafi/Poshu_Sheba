@@ -294,8 +294,6 @@ st.markdown(
     }}
 
     /* Hide popover dropdown body completely when the dialog is open in DOM */
-    body:has(div[role="dialog"]) div[data-testid="stPopoverBody"],
-    body:has(div[role="dialog"]) div[class*="stPopoverBody"],
     body:has(div[data-testid="stDialog"]) div[data-testid="stPopoverBody"],
     body:has(div[data-testid="stDialog"]) div[class*="stPopoverBody"] {{
         display: none !important;
