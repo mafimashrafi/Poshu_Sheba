@@ -96,135 +96,157 @@ def profile_dialog() -> None:
 
     profile = st.session_state.profile_data
 
-    name = st.text_input("নাম", value=profile.get("name") or "", placeholder="আপনার নাম লিখুন")
-    address = st.text_input("ঠিকানা", value=profile.get("address") or "", placeholder="আপনার ঠিকানা লিখুন")
-    email = st.text_input("ইমেইল (ঐচ্ছিক)", value=profile.get("email") or "", placeholder="আপনার ইমেইল লিখুন")
-    
-    # Render preview
-    avatar_url = profile.get("profile_picture_url")
-    if avatar_url:
-        st.image(avatar_url, width=100, caption="বর্তমান ছবি")
-    else:
+    col_left, col_right = st.columns([3.5, 6.5], gap="large")
+
+    with col_left:
+        # Render circular avatar preview with object-fit: cover, border, and shadow
+        avatar_url = profile.get("profile_picture_url")
+        if avatar_url:
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: center; margin-bottom: 0.8rem;">
+                    <img src="{avatar_url}" style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.15);" />
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                """
+                <div style="display: flex; justify-content: center; margin-bottom: 0.8rem;">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 140px; height: 140px; border-radius: 50%; background-color: #E2E8F0; color: #718096; font-size: 3rem; font-weight: 700; border: 3px solid white; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.15);">
+                        👤
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # Compact File uploader (label collapsed)
+        uploaded_pic = st.file_uploader(
+            "প্রোফাইল ছবি",
+            type=["jpg", "jpeg", "png", "webp"],
+            key="profile_pic_uploader",
+            label_visibility="collapsed"
+        )
+
         st.markdown(
-            """
-            <div style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border-radius: 50%; background-color: #E2E8F0; color: #718096; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.8rem;">
-                👤
-            </div>
-            """,
+            """<p style="text-align: center; color: #64748B; font-size: 0.78rem; margin-top: 0.4rem; line-height: 1.2;">
+            JPG, PNG, WEBP<br>(সর্বোচ্চ ৫ মেগাবাইট)
+            </p>""",
             unsafe_allow_html=True
         )
 
-    # File uploader
-    uploaded_pic = st.file_uploader(
-        "প্রোফাইল ছবি",
-        type=["jpg", "jpeg", "png", "webp"],
-        key="profile_pic_uploader"
-    )
-
-    # If a new file is uploaded, upload it to the backend immediately
-    if uploaded_pic is not None:
-        last_uploaded_name = st.session_state.get("last_uploaded_profile_pic_name")
-        if last_uploaded_name != uploaded_pic.name:
-            try:
-                with st.spinner("ছবি আপলোড হচ্ছে..."):
-                    res = api_client.upload_profile_picture(
-                        token=token,
-                        file_bytes=uploaded_pic.getvalue(),
-                        filename=uploaded_pic.name,
-                        mime_type=uploaded_pic.type
-                    )
-                st.session_state.profile_data["profile_picture_url"] = res["profile_picture_url"]
-                st.session_state.last_uploaded_profile_pic_name = uploaded_pic.name
-                st.toast("প্রোফাইল ছবি আপলোড করা হয়েছে!", icon="📸")
-                st.rerun()
-            except api_client.ApiError as exc:
-                st.error(exc.message)
-
-    st.markdown("### খামারের তথ্য (ফসল ও পশুর বিবরণ)")
-
-    farms = profile.get("farms") or []
-    updated_farms = []
-
-    for idx, farm in enumerate(farms):
-        col_type, col_count, col_del = st.columns([5, 3, 2], vertical_alignment="bottom")
-        with col_type:
-            animal_type = st.text_input(f"পশুর ধরণ #{idx+1}", value=farm.get("animal_type") or "", key=f"farm_type_{idx}")
-        with col_count:
-            count = st.number_input(f"সংখ্যা #{idx+1}", value=int(farm.get("count") or 1), min_value=1, step=1, key=f"farm_count_{idx}")
-        with col_del:
-            is_deleted = st.checkbox("মুছুন", key=f"farm_delete_{idx}")
-
-        if not is_deleted and animal_type.strip():
-            updated_farms.append({"animal_type": animal_type.strip(), "count": count})
-
-    st.markdown("---")
-    st.markdown("**নতুন পশুর তথ্য যোগ করুন:**")
-    new_col_type, new_col_count = st.columns([6, 4])
-    with new_col_type:
-        new_animal_type = st.text_input("পশুর ধরণ (যেমন: গরু, ছাগল)", key="new_farm_type_input")
-    with new_col_count:
-        new_count = st.number_input("সংখ্যা", value=1, min_value=1, step=1, key="new_farm_count_input")
-
-    st.markdown("---")
-
-    show_confirm = st.session_state.get("show_delete_confirm", False)
-
-    if show_confirm:
-        st.warning("আপনি কি নিশ্চিত যে আপনি আপনার অ্যাকাউন্ট এবং সমস্ত সেভ করা উত্তর মুছে ফেলতে চান? এটি আর ফেরত আনা যাবে না।")
-        del_col1, del_col2 = st.columns(2)
-        with del_col1:
-            if st.button("হ্যাঁ, মুছে ফেলুন", key="confirm_delete_btn", type="primary", use_container_width=True):
+        # Upload handling logic (automatic upload on selection)
+        if uploaded_pic is not None:
+            last_uploaded_name = st.session_state.get("last_uploaded_profile_pic_name")
+            if last_uploaded_name != uploaded_pic.name:
                 try:
-                    with st.spinner("অ্যাকাউন্ট মুছে ফেলা হচ্ছে..."):
-                        api_client.delete_account(token)
-                    st.session_state.token = None
-                    st.session_state.phone_number = None
-                    st.session_state.display_name = None
-                    st.session_state.nav_page = "home"
+                    with st.spinner("ছবি আপলোড হচ্ছে..."):
+                        res = api_client.upload_profile_picture(
+                            token=token,
+                            file_bytes=uploaded_pic.getvalue(),
+                            filename=uploaded_pic.name,
+                            mime_type=uploaded_pic.type
+                        )
+                    st.session_state.profile_data["profile_picture_url"] = res["profile_picture_url"]
+                    st.session_state.last_uploaded_profile_pic_name = uploaded_pic.name
+                    st.toast("প্রোফাইল ছবি আপলোড করা হয়েছে!", icon="📸")
+                    st.rerun()
+                except api_client.ApiError as exc:
+                    st.error(exc.message)
+
+    with col_right:
+        name = st.text_input("নাম", value=profile.get("name") or "", placeholder="আপনার নাম লিখুন")
+        address = st.text_input("ঠিকানা", value=profile.get("address") or "", placeholder="আপনার ঠিকানা লিখুন")
+        email = st.text_input("ইমেইল (ঐচ্ছিক)", value=profile.get("email") or "", placeholder="আপনার ইমেইল লিখুন")
+
+        st.markdown("### খামারের তথ্য (ফসল ও পশুর বিবরণ)")
+
+        farms = profile.get("farms") or []
+        updated_farms = []
+
+        for idx, farm in enumerate(farms):
+            col_type, col_count, col_del = st.columns([5, 3, 2], vertical_alignment="bottom")
+            with col_type:
+                animal_type = st.text_input(f"পশুর ধরণ #{idx+1}", value=farm.get("animal_type") or "", key=f"farm_type_{idx}")
+            with col_count:
+                count = st.number_input(f"সংখ্যা #{idx+1}", value=int(farm.get("count") or 1), min_value=1, step=1, key=f"farm_count_{idx}")
+            with col_del:
+                is_deleted = st.checkbox("মুছুন", key=f"farm_delete_{idx}")
+
+            if not is_deleted and animal_type.strip():
+                updated_farms.append({"animal_type": animal_type.strip(), "count": count})
+
+        st.markdown("---")
+        st.markdown("**নতুন পশুর তথ্য যোগ করুন:**")
+        new_col_type, new_col_count = st.columns([6, 4])
+        with new_col_type:
+            new_animal_type = st.text_input("পশুর ধরণ (যেমন: গরু, ছাগল)", key="new_farm_type_input")
+        with new_col_count:
+            new_count = st.number_input("সংখ্যা", value=1, min_value=1, step=1, key="new_farm_count_input")
+
+        st.markdown("---")
+
+        show_confirm = st.session_state.get("show_delete_confirm", False)
+
+        if show_confirm:
+            st.warning("আপনি কি নিশ্চিত যে আপনি আপনার অ্যাকাউন্ট এবং সমস্ত সেভ করা উত্তর মুছে ফেলতে চান? এটি আর ফেরত আনা যাবে না।")
+            del_col1, del_col2 = st.columns(2)
+            with del_col1:
+                if st.button("হ্যাঁ, মুছে ফেলুন", key="confirm_delete_btn", type="primary", use_container_width=True):
+                    try:
+                        with st.spinner("অ্যাকাউন্ট মুছে ফেলা হচ্ছে..."):
+                            api_client.delete_account(token)
+                        st.session_state.token = None
+                        st.session_state.phone_number = None
+                        st.session_state.display_name = None
+                        st.session_state.nav_page = "home"
+                        st.session_state.show_delete_confirm = False
+                        st.session_state.profile_data = None
+                        st.session_state.profile_data_refetched = False
+                        st.success("অ্যাকাউন্টটি মুছে ফেলা হয়েছে।")
+                        st.rerun()
+                    except api_client.ApiError as exc:
+                        st.error(exc.message)
+            with del_col2:
+                if st.button("না, বাতিল করুন", key="cancel_delete_btn", use_container_width=True):
                     st.session_state.show_delete_confirm = False
-                    st.session_state.profile_data = None
-                    st.session_state.profile_data_refetched = False
-                    st.success("অ্যাকাউন্টটি মুছে ফেলা হয়েছে।")
-                    st.rerun()
-                except api_client.ApiError as exc:
-                    st.error(exc.message)
-        with del_col2:
-            if st.button("না, বাতিল করুন", key="cancel_delete_btn", use_container_width=True):
-                st.session_state.show_delete_confirm = False
-                # No st.rerun() here to keep the dialog open and go back to the profile form
-    else:
-        col_save, col_delete = st.columns([7, 3])
-        with col_save:
-            if st.button("তথ্য সংরক্ষণ করুন", key="profile_save_btn", type="primary", use_container_width=True):
-                payload = {
-                    "name": name.strip() or None,
-                    "address": address.strip(),
-                    "email": email.strip() or None,
-                    "profile_picture_url": profile.get("profile_picture_url"),
-                    "farms": updated_farms
-                }
+                    # No st.rerun() here to keep the dialog open and go back to the profile form
+        else:
+            col_save, col_delete = st.columns([7, 3])
+            with col_save:
+                if st.button("তথ্য সংরক্ষণ করুন", key="profile_save_btn", type="primary", use_container_width=True):
+                    payload = {
+                        "name": name.strip() or None,
+                        "address": address.strip(),
+                        "email": email.strip() or None,
+                        "profile_picture_url": profile.get("profile_picture_url"),
+                        "farms": updated_farms
+                    }
 
-                if new_animal_type.strip():
-                    payload["farms"].append({"animal_type": new_animal_type.strip(), "count": int(new_count)})
+                    if new_animal_type.strip():
+                        payload["farms"].append({"animal_type": new_animal_type.strip(), "count": int(new_count)})
 
-                if not payload["address"]:
-                    st.error("ঠিকানা ফাঁকা রাখা যাবে না।")
-                    return
+                    if not payload["address"]:
+                        st.error("ঠিকানা ফাঁকা রাখা যাবে না।")
+                        return
 
-                try:
-                    with st.spinner("সংরক্ষণ করা হচ্ছে..."):
-                        api_client.update_profile(token, payload)
-                    st.session_state.display_name = payload["name"] or None
-                    st.session_state.profile_data_refetched = False
-                    st.toast("প্রোফাইল সফলভাবে আপডেট করা হয়েছে!", icon="✅")
-                    st.rerun()
-                except api_client.ApiError as exc:
-                    st.error(exc.message)
+                    try:
+                        with st.spinner("সংরক্ষণ করা হচ্ছে..."):
+                            api_client.update_profile(token, payload)
+                        st.session_state.display_name = payload["name"] or None
+                        st.session_state.profile_data_refetched = False
+                        st.toast("প্রোফাইল সফলভাবে আপডেট করা হয়েছে!", icon="✅")
+                        st.rerun()
+                    except api_client.ApiError as exc:
+                        st.error(exc.message)
 
-        with col_delete:
-            if st.button("অ্যাকাউন্ট মুছুন", key="profile_delete_btn", type="secondary", use_container_width=True):
-                st.session_state.show_delete_confirm = True
-                # No st.rerun() here to keep the dialog open and switch to confirmation view
+            with col_delete:
+                if st.button("অ্যাকাউন্ট মুছুন", key="profile_delete_btn", type="secondary", use_container_width=True):
+                    st.session_state.show_delete_confirm = True
+                    # No st.rerun() here to keep the dialog open and switch to confirmation view
+
 
 
 
@@ -244,9 +266,81 @@ st.markdown(
 
     [data-testid="stAppViewContainer"] {{ background: {BG}; }}
 
+    /* ---- Redesigned Profile Dialog Modals ---- */
+    div[data-testid="stDialog"] div[class*="stDialog"] {{
+        max-width: 780px !important;
+        width: 780px !important;
+    }}
+
+    div[class*="st-key-profile_save_btn"] button {{
+        background-color: #14B8A6 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div[class*="st-key-profile_save_btn"] button:hover {{
+        background-color: #0D9488 !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3) !important;
+    }}
+
+    div[class*="st-key-profile_delete_btn"] button {{
+        background-color: transparent !important;
+        color: #EF4444 !important;
+        border: 1px solid #EF4444 !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div[class*="st-key-profile_delete_btn"] button:hover {{
+        background-color: #EF4444 !important;
+        color: white !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    }}
+
+    div[class*="st-key-confirm_delete_btn"] button {{
+        background-color: #EF4444 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div[class*="st-key-confirm_delete_btn"] button:hover {{
+        background-color: #DC2626 !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    }}
+
+    div[class*="st-key-cancel_delete_btn"] button {{
+        background-color: #E2E8F0 !important;
+        color: #475569 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div[class*="st-key-cancel_delete_btn"] button:hover {{
+        background-color: #CBD5E1 !important;
+        transform: scale(1.02) !important;
+    }}
+
+    div[class*="st-key-profile_pic_uploader"] {{
+        max-width: 100% !important;
+    }}
+    div[class*="st-key-profile_pic_uploader"] section {{
+        padding: 0.5rem !important;
+        background-color: #F8FAFC !important;
+        border-radius: 8px !important;
+        border: 1px dashed #CBD5E1 !important;
+    }}
+    div[class*="st-key-profile_pic_uploader"] label {{
+        display: none !important;
+    }}
+
     #MainMenu, header[data-testid="stHeader"], footer {{ visibility: hidden; height: 0; }}
 
     .block-container {{ padding-top: 1.1rem; padding-bottom: 2rem; max-width: 1360px; }}
+
 
     h1, h2, h3 {{ color: {INK}; font-weight: 700; letter-spacing: -0.01em; }}
 
