@@ -25,6 +25,10 @@ async def register_user(user: UserRegisterRequest, request: Request):
                 "name": user.name,
                 "phone_number": user.phone_number,
                 "password_hash": hash_password(user.password),
+                "address": user.address,
+                "email": None,
+                "profile_picture_url": None,
+                "farms": [],
                 "created_at": now,
             }
         )

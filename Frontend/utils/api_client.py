@@ -39,11 +39,11 @@ def _detail(response: requests.Response, fallback: str) -> str:
     return detail or fallback
 
 
-def register(name: Optional[str], phone_number: str, password: str) -> dict[str, Any]:
+def register(name: Optional[str], phone_number: str, address: str, password: str) -> dict[str, Any]:
     try:
         response = requests.post(
             f"{API_URL}/register",
-            json={"name": name, "phone_number": phone_number, "password": password},
+            json={"name": name, "phone_number": phone_number, "address": address, "password": password},
             timeout=TIMEOUT,
         )
     except requests.exceptions.RequestException:

@@ -193,7 +193,7 @@ MongoDB contains three collections:
 
 | Collection | Stored information | Indexes |
 | --- | --- | --- |
-| `users` | Name, canonical phone number, salted password hash, creation time | Unique `phone_number` |
+| `users` | Name (or null), canonical phone number, salted password hash, address, email (or null, default null), profile_picture_url (or null, default null), farms (array, default []), creation time | Unique `phone_number` |
 | `sessions` | Canonical phone number, SHA-256 token hash, creation and expiry times | Unique `token_hash`; TTL on `expires_at` |
 | `saved_responses` | Owner phone number, response text, creation time | Compound `phone_number`, `created_at` index |
 

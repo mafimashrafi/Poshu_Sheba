@@ -57,17 +57,18 @@ def login_dialog() -> None:
     with tab_register:
         name = st.text_input("নাম (ঐচ্ছিক)", key="register_name")
         phone_r = st.text_input("ফোন নম্বর", placeholder="01xxxxxxxxx", key="register_phone")
+        address_r = st.text_input("ঠিকানা", placeholder="আপনার বর্তমান ঠিকানা লিখুন", key="register_address")
         password_r = st.text_input(
             "পাসওয়ার্ড", type="password", key="register_password", help="কমপক্ষে ৮ অক্ষর"
         )
         if st.button("অ্যাকাউন্ট তৈরি করুন", key="register_submit", type="primary", use_container_width=True):
-            if not phone_r or not password_r:
-                st.error("ফোন নম্বর এবং পাসওয়ার্ড দিন।")
+            if not phone_r or not address_r or not password_r:
+                st.error("ফোন নম্বর, ঠিকানা এবং পাসওয়ার্ড দিন।")
             elif len(password_r) < 8:
                 st.error("পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।")
             else:
                 try:
-                    api_client.register(name or None, phone_r, password_r)
+                    api_client.register(name or None, phone_r, address_r, password_r)
                     result = api_client.login(phone_r, password_r)
                     st.session_state.token = result["access_token"]
                     st.session_state.phone_number = phone_r
