@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from models.response import SaveResponseRequest
 from db.mongodb import save_user_response, get_user_saved_responses
 from core.security import hash_session_token
+from bson import ObjectId
+from bson.errors import InvalidId
 
 router = APIRouter()
 
@@ -56,3 +59,24 @@ async def get_saved_responses(
         "phone_number": phone_number,
         "responses": get_user_saved_responses(db, phone_number),
     }
+
+
+@router.delete("/saved-responses/{response_id}")
+async def delete_saved_response(
+    response_id: str,
+    session: Annotated[dict[str, Any], Depends(require_active_session)],
+    request: Request,
+):
+    """Delete a saved response belonging to the authenticated user."""
+    db = request.app.state.db
+    try:
+        obj_id = ObjectId(response_id)
+    except InvalidId:
+        raise HTTPException(status_code=404, detail="Response not found")
+
+    saved_response = db.saved_responses.find_one({"_id": obj_id})
+    if not saved_response or saved_response.get("phone_number") != session["phone_number"]:
+        raise HTTPException(status_code=404, detail="Response not found")
+
+    db.saved_responses.delete_one({"_id": obj_id})
+    return {"message": "Response deleted successfully"}

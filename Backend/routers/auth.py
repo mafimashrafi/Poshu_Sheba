@@ -45,9 +45,49 @@ async def register_user(user: UserRegisterRequest, request: Request):
 async def login(payload: LoginRequest, request: Request):
     """Verify a phone number and password, then create a session."""
     db = request.app.state.db
-    user = db.users.find_one({"phone_number": payload.phone_number})
+    phone_number = payload.phone_number
+
+    # 1. Rate limiting check
+    now = datetime.now(timezone.utc)
+    attempt_record = db.login_attempts.find_one({"phone_number": phone_number})
+    if attempt_record:
+        failed_attempts = attempt_record.get("attempts", 0)
+        last_failed_at = attempt_record.get("last_failed_at")
+        if failed_attempts >= 5:
+            time_diff = now - last_failed_at
+            if time_diff.total_seconds() < 15 * 60:
+                raise HTTPException(
+                    status_code=429,
+                    detail="অনেকবার ভুল চেষ্টা করা হয়েছে, অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।"
+                )
+
+    user = db.users.find_one({"phone_number": phone_number})
     if not user or not verify_password(payload.password, user.get("password_hash", "")):
+        # Record failed attempt
+        if attempt_record:
+            last_failed_at = attempt_record.get("last_failed_at")
+            time_diff = now - last_failed_at
+            if time_diff.total_seconds() >= 15 * 60:
+                new_attempts = 1
+            else:
+                new_attempts = attempt_record.get("attempts", 0) + 1
+
+            db.login_attempts.update_one(
+                {"phone_number": phone_number},
+                {"$set": {"attempts": new_attempts, "last_failed_at": now}}
+            )
+        else:
+            db.login_attempts.insert_one(
+                {
+                    "phone_number": phone_number,
+                    "attempts": 1,
+                    "last_failed_at": now
+                }
+            )
         raise HTTPException(status_code=401, detail="Invalid phone number or password")
+
+    # Reset attempts on success
+    db.login_attempts.delete_one({"phone_number": phone_number})
 
     token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=30)
@@ -141,4 +181,17 @@ async def delete_account(
     db.saved_responses.delete_many({"phone_number": phone_number})
 
     return {"message": "Account deleted successfully"}
+
+
+@router.post("/logout")
+async def logout(
+    session: Annotated[dict[str, Any], Depends(require_active_session)],
+    request: Request,
+):
+    """Log out the user globally, invalidating all sessions."""
+    db = request.app.state.db
+    phone_number = session["phone_number"]
+    db.sessions.delete_many({"phone_number": phone_number})
+    return {"message": "Logged out from all sessions successfully"}
+
 
