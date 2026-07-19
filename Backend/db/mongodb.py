@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 from fastapi import FastAPI
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
@@ -27,12 +27,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         client.close()
 
 
-def save_user_response(db: Any, phone_number: str, response: str) -> str:
-    """Store a generated response under the authenticated user's phone number."""
+def save_user_response(
+    db: Any,
+    phone_number: str,
+    response: str,
+    prompt: Optional[str] = None,
+    had_image: bool = False,
+    had_audio: bool = False,
+) -> str:
+    """Store a generated response (and the prompt that produced it) under the
+    authenticated user's phone number. Images/audio are not stored — MongoDB
+    only keeps a note that they were part of the original prompt.
+    """
     result = db.saved_responses.insert_one(
         {
             "phone_number": phone_number,
             "response": response,
+            "prompt": prompt,
+            "had_image": had_image,
+            "had_audio": had_audio,
             "created_at": datetime.now(timezone.utc),
         }
     )
@@ -48,6 +61,9 @@ def get_user_saved_responses(db: Any, phone_number: str) -> list[dict[str, Any]]
         {
             "response_id": str(saved_response["_id"]),
             "response": saved_response["response"],
+            "prompt": saved_response.get("prompt"),
+            "had_image": saved_response.get("had_image", False),
+            "had_audio": saved_response.get("had_audio", False),
             "created_at": saved_response["created_at"],
         }
         for saved_response in saved_responses

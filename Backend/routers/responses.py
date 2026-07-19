@@ -42,7 +42,12 @@ async def save_response(
     """Save a generated response for the phone number associated with the login."""
     db = request.app.state.db
     response_id = save_user_response(
-        db, session["phone_number"], payload.response
+        db,
+        session["phone_number"],
+        payload.response,
+        prompt=payload.prompt,
+        had_image=payload.had_image,
+        had_audio=payload.had_audio,
     )
     return {"message": "Response saved successfully", "response_id": response_id}
 

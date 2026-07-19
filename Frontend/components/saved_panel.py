@@ -5,11 +5,11 @@ from typing import Callable
 
 import streamlit as st
 
-from utils import api_client
+from utils import api_client, theme
 from utils.icons import icon
 
-INK = "#0B2545"
-TEAL = "#14B8A6"
+INK = theme.NAVY
+TEAL = theme.PRIMARY
 
 WHY_LOGIN = [
     "আপনার উত্তরসমূহ সংরক্ষণ করুন",
@@ -74,7 +74,7 @@ def _render_locked(on_open_login: Callable[[], None]) -> None:
         st.markdown(
             f"""
             <div style="display:flex;justify-content:center;margin:1.2rem 0 1rem;">
-                <div style="width:64px;height:64px;border-radius:50%;background:rgba(20,184,166,0.12);
+                <div style="width:64px;height:64px;border-radius:50%;background:{theme.PRIMARY_TINT};
                             display:flex;align-items:center;justify-content:center;">
                     {icon("lock", color=TEAL, size=28)}
                 </div>
@@ -99,7 +99,7 @@ def _render_locked(on_open_login: Callable[[], None]) -> None:
             st.markdown(
                 f"""
                 <div style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.5rem;">
-                    {icon("check-circle", color="#22A06B", size=16)}
+                    {icon("check-circle", color=theme.PRIMARY, size=16)}
                     <span style="color:{INK};font-size:0.88rem;">{reason}</span>
                 </div>
                 """,

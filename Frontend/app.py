@@ -1,19 +1,27 @@
 import streamlit as st
 
+from components.badges import classify_severity, render_severity_badge
 from components.header import render_header
 from components.mascot import render_walking_cow
 from components.saved_panel import render_saved_panel
 from components.sidebar import render_sidebar
-from utils import api_client
+from utils import api_client, theme
 from utils.icons import icon
 
 st.set_page_config(page_title="vet.ai — পশু সেবা AI", page_icon="🐄", layout="wide")
 
-INK = "#0B2545"
-MUTED = "#5B6B7B"
-TEAL = "#14B8A6"
-TEAL_TINT = "rgba(20, 184, 166, 0.10)"
-BG = "#F4F7FA"
+INK = theme.NAVY
+MUTED = theme.SLATE
+TEAL = theme.PRIMARY
+TEAL_HOVER = theme.PRIMARY_HOVER
+TEAL_TINT = theme.PRIMARY_TINT
+MINT = theme.MINT
+BORDER = theme.BORDER
+AMBER = theme.AMBER
+AMBER_TINT = theme.AMBER_TINT
+RED = theme.RED
+RED_TINT = theme.RED_TINT
+BG = theme.BG
 
 # -----------------------------
 # Session state
@@ -24,6 +32,9 @@ _DEFAULTS = {
     "display_name": None,
     "nav_page": "home",
     "chat_response": None,
+    "chat_prompt": None,
+    "chat_had_image": False,
+    "chat_had_audio": False,
     "response_saved": False,
     "audio_version": 0,
 }
@@ -105,16 +116,16 @@ def profile_dialog() -> None:
             st.markdown(
                 f"""
                 <div style="display: flex; justify-content: center; margin-bottom: 0.8rem;">
-                    <img src="{avatar_url}" style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.15);" />
+                    <img src="{avatar_url}" style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 12px rgba(15, 42, 61, 0.15);" />
                 </div>
                 """,
                 unsafe_allow_html=True
             )
         else:
             st.markdown(
-                """
+                f"""
                 <div style="display: flex; justify-content: center; margin-bottom: 0.8rem;">
-                    <div style="display: flex; align-items: center; justify-content: center; width: 140px; height: 140px; border-radius: 50%; background-color: #E2E8F0; color: #718096; font-size: 3rem; font-weight: 700; border: 3px solid white; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.15);">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 140px; height: 140px; border-radius: 50%; background-color: {MINT}; color: {MUTED}; font-size: 3rem; font-weight: 700; border: 3px solid white; box-shadow: 0 4px 12px rgba(15, 42, 61, 0.15);">
                         👤
                     </div>
                 </div>
@@ -131,7 +142,7 @@ def profile_dialog() -> None:
         )
 
         st.markdown(
-            """<p style="text-align: center; color: #64748B; font-size: 0.78rem; margin-top: 0.4rem; line-height: 1.2;">
+            f"""<p style="text-align: center; color: {MUTED}; font-size: 0.78rem; margin-top: 0.4rem; line-height: 1.2;">
             JPG, PNG, WEBP<br>(সর্বোচ্চ ৫ মেগাবাইট)
             </p>""",
             unsafe_allow_html=True
@@ -159,8 +170,8 @@ def profile_dialog() -> None:
     with col_right:
         with st.container(border=True):
             st.markdown(
-                """
-                <div style="color: #0F766E; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+                f"""
+                <div style="color: {TEAL}; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
                     👤 ব্যক্তিগত তথ্য
                 </div>
                 """,
@@ -172,8 +183,8 @@ def profile_dialog() -> None:
 
         with st.container(border=True):
             st.markdown(
-                """
-                <div style="color: #0F766E; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+                f"""
+                <div style="color: {TEAL}; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
                     🚜 খামারের তথ্য (ফসল ও পশুর বিবরণ)
                 </div>
                 """,
@@ -281,7 +292,16 @@ st.markdown(
         font-family: 'Inter', 'Noto Sans Bengali', -apple-system, sans-serif !important;
     }}
 
+    /* Fluid base size: every rem-based font in the app scales up a little
+       and adapts to the viewport instead of staying fixed on mobile. */
+    html {{ font-size: clamp(16px, 0.55vw + 15px, 18px); }}
+
     [data-testid="stAppViewContainer"] {{ background: {BG}; }}
+
+    @media (max-width: 640px) {{
+        .block-container {{ padding-left: 0.9rem !important; padding-right: 0.9rem !important; }}
+        div.st-key-app_header {{ padding: 0.7rem 1rem !important; }}
+    }}
 
     /* ---- Redesigned Profile Dialog Modals ---- */
     div[role="dialog"],
@@ -316,70 +336,69 @@ st.markdown(
     div[class*="stPopoverBody"] {{
         animation: fadeSlideDown 0.2s ease-out !important;
         border-radius: 12px !important;
-        box-shadow: 0 10px 25px rgba(11, 37, 69, 0.1) !important;
+        box-shadow: 0 10px 25px rgba(15, 42, 61, 0.1) !important;
     }}
 
     /* Themed container cards inside the profile dialog */
     div[role="dialog"] div[data-testid="stVerticalBlockBorderContainer"] {{
-        background-color: #F8FAFC !important;
-        border: 1px solid #E2E8F0 !important;
-        border-left: 4px solid #14B8A6 !important;
+        background-color: {MINT} !important;
+        border: 1px solid {BORDER} !important;
+        border-left: 4px solid {TEAL} !important;
         border-radius: 12px !important;
         padding: 1.2rem !important;
         margin-bottom: 1.2rem !important;
-        box-shadow: 0 2px 8px rgba(11, 37, 69, 0.02) !important;
+        box-shadow: 0 2px 8px rgba(15, 42, 61, 0.02) !important;
     }}
 
     /* Button and File Uploader animations */
     div[class*="st-key-profile_save_btn"] button {{
-        background-color: #14B8A6 !important;
+        background-color: {TEAL} !important;
         color: white !important;
         border-radius: 8px !important;
         border: none !important;
         transition: all 0.2s ease-in-out !important;
     }}
     div[class*="st-key-profile_save_btn"] button:hover {{
-        background-color: #0D9488 !important;
+        background-color: {TEAL_HOVER} !important;
         transform: scale(1.02) !important;
-        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3) !important;
+        box-shadow: 0 4px 12px {TEAL_TINT} !important;
     }}
 
     div[class*="st-key-profile_delete_btn"] button {{
         background-color: transparent !important;
-        color: #EF4444 !important;
-        border: 1px solid #EF4444 !important;
+        color: {RED} !important;
+        border: 1px solid {RED} !important;
         border-radius: 8px !important;
         transition: all 0.2s ease-in-out !important;
     }}
     div[class*="st-key-profile_delete_btn"] button:hover {{
-        background-color: #EF4444 !important;
+        background-color: {RED} !important;
         color: white !important;
         transform: scale(1.02) !important;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+        filter: brightness(0.94) !important;
     }}
 
     div[class*="st-key-confirm_delete_btn"] button {{
-        background-color: #EF4444 !important;
+        background-color: {RED} !important;
         color: white !important;
         border-radius: 8px !important;
         border: none !important;
         transition: all 0.2s ease-in-out !important;
     }}
     div[class*="st-key-confirm_delete_btn"] button:hover {{
-        background-color: #DC2626 !important;
+        filter: brightness(0.88) !important;
         transform: scale(1.02) !important;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
     }}
 
     div[class*="st-key-cancel_delete_btn"] button {{
-        background-color: #E2E8F0 !important;
-        color: #475569 !important;
+        background-color: {BORDER} !important;
+        color: {MUTED} !important;
         border-radius: 8px !important;
         border: none !important;
         transition: all 0.2s ease-in-out !important;
     }}
     div[class*="st-key-cancel_delete_btn"] button:hover {{
-        background-color: #CBD5E1 !important;
+        filter: brightness(0.96) !important;
         transform: scale(1.02) !important;
     }}
 
@@ -388,9 +407,9 @@ st.markdown(
     }}
     div[class*="st-key-profile_pic_uploader"] section {{
         padding: 0.5rem !important;
-        background-color: #F8FAFC !important;
+        background-color: {MINT} !important;
         border-radius: 8px !important;
-        border: 1px dashed #CBD5E1 !important;
+        border: 1px dashed {BORDER} !important;
     }}
     div[class*="st-key-profile_pic_uploader"] label {{
         display: none !important;
@@ -400,26 +419,26 @@ st.markdown(
     }}
     div[class*="st-key-profile_pic_uploader"] button:hover {{
         transform: scale(1.02) !important;
-        box-shadow: 0 4px 12px rgba(11, 37, 69, 0.1) !important;
+        box-shadow: 0 4px 12px rgba(15, 42, 61, 0.1) !important;
     }}
 
     /* Light pastel input styling for Profile Dialog inputs */
-    div[data-testid="stTextInput"] input, 
+    div[data-testid="stTextInput"] input,
     div[data-testid="stNumberInput"] input {{
-        background-color: #F0FDFA !important;
-        border: 1px solid #CCFBF1 !important;
+        background-color: {MINT} !important;
+        border: 1px solid {BORDER} !important;
         border-radius: 8px !important;
         padding: 0.55rem 0.8rem !important;
-        color: #0F766E !important;
+        color: {TEAL} !important;
         font-weight: 500 !important;
         transition: all 0.2s ease-in-out !important;
     }}
-    div[data-testid="stTextInput"] input:focus, 
+    div[data-testid="stTextInput"] input:focus,
     div[data-testid="stNumberInput"] input:focus {{
         background-color: #FFFFFF !important;
-        border-color: #14B8A6 !important;
-        color: #0F2942 !important;
-        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15) !important;
+        border-color: {TEAL} !important;
+        color: {INK} !important;
+        box-shadow: 0 0 0 3px {TEAL_TINT} !important;
     }}
 
     /* Number input stepper button hover state transition */
@@ -427,8 +446,8 @@ st.markdown(
         transition: all 0.18s ease-in-out !important;
     }}
     div[role="dialog"] button[data-testid*="InputStep"]:hover {{
-        background-color: #E2E8F0 !important;
-        color: #14B8A6 !important;
+        background-color: {MINT} !important;
+        color: {TEAL} !important;
     }}
 
     #MainMenu, header[data-testid="stHeader"], footer {{ visibility: hidden; height: 0; }}
@@ -438,7 +457,7 @@ st.markdown(
 
     h1, h2, h3 {{ color: {INK}; font-weight: 700; letter-spacing: -0.01em; }}
 
-    ::selection {{ background: rgba(20, 184, 166, 0.25); }}
+    ::selection {{ background: {TEAL_TINT}; }}
 
     .stButton > button {{ border-radius: 12px; font-weight: 600; transition: all 0.18s ease; box-shadow: none; }}
     .stButton > button:hover {{ transform: translateY(-1px); }}
@@ -447,7 +466,7 @@ st.markdown(
     /* ---- Header ---- */
     div.st-key-app_header {{
         background: #FFFFFF; border-radius: 18px; padding: 0.8rem 1.4rem; margin-bottom: 1.8rem;
-        box-shadow: 0 2px 16px rgba(11, 37, 69, 0.05); border: 1px solid rgba(11, 37, 69, 0.04);
+        box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
     }}
     div.st-key-logo_brand {{ position: relative; }}
     div.st-key-logo_brand .st-key-logo_home_btn {{
@@ -462,51 +481,54 @@ st.markdown(
         width: 100%; height: 100%; min-height: 48px; opacity: 0; cursor: pointer; padding: 0;
     }}
     div.st-key-header_login button {{
-        background: linear-gradient(135deg, #14B8A6, #0D9488); border: none; border-radius: 999px;
-        box-shadow: 0 6px 16px rgba(20, 184, 166, 0.32);
+        background: {TEAL}; border: none; border-radius: 999px; color: white;
+        box-shadow: 0 6px 16px {TEAL_TINT};
     }}
-    div.st-key-header_login button:hover {{ box-shadow: 0 8px 20px rgba(20, 184, 166, 0.42); }}
+    div.st-key-header_login button:hover {{ background: {TEAL_HOVER}; box-shadow: 0 8px 20px {TEAL_TINT}; }}
 
-    /* ---- Sidebar nav pills ---- */
+    /* ---- Sidebar: "Ask a new question" primary CTA ---- */
+    div.st-key-sidebar_ask_cta button {{
+        background: {TEAL}; border: none; border-radius: 999px; color: white;
+        font-weight: 700; padding: 0.8rem 1rem; box-shadow: 0 6px 16px {TEAL_TINT};
+    }}
+    div.st-key-sidebar_ask_cta button:hover {{ background: {TEAL_HOVER}; box-shadow: 0 8px 20px {TEAL_TINT}; }}
+
+    /* ---- Sidebar links ("saved answers" / "usage guide") ---- */
     div.st-key-sidebar_nav .stButton > button {{
         background: transparent; border: none; text-align: left; justify-content: flex-start;
         color: {MUTED}; font-weight: 500; padding: 0.6rem 0.9rem; border-radius: 11px;
     }}
-    div.st-key-sidebar_nav .stButton > button:hover {{ background: {TEAL_TINT}; color: {TEAL}; transform: none; }}
+    div.st-key-sidebar_nav .stButton > button:hover {{ background: {MINT}; color: {TEAL}; transform: none; }}
     div.st-key-sidebar_nav button[kind="primary"] {{
-        background: {TEAL_TINT}; color: {TEAL}; font-weight: 700; box-shadow: none;
+        background: {MINT}; color: {TEAL}; font-weight: 700; box-shadow: none;
         border-left: 3px solid {TEAL};
     }}
 
     /* ---- Cards ---- */
     div.st-key-reminder_card, div.st-key-saved_panel, div.st-key-card_image, div.st-key-card_audio,
     div.st-key-response_card {{
-        background: #FFFFFF; border-radius: 18px; padding: 1.35rem 1.25rem;
-        box-shadow: 0 2px 16px rgba(11, 37, 69, 0.055); border: 1px solid rgba(11, 37, 69, 0.045);
+        background: {MINT}; border-radius: 18px; padding: 1.35rem 1.25rem;
+        box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
     }}
     div.st-key-card_image, div.st-key-card_audio {{
         text-align: center; transition: box-shadow 0.2s ease, transform 0.2s ease;
     }}
     div.st-key-card_image:hover, div.st-key-card_audio:hover {{
-        box-shadow: 0 8px 24px rgba(11, 37, 69, 0.09); transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(15, 42, 61, 0.09); transform: translateY(-2px);
     }}
-    div.st-key-saved_locked {{ background: #FAFBFC; border-radius: 14px; padding: 1rem 1rem 1.4rem; margin-top: 0.4rem; }}
+    div.st-key-saved_locked {{ background: #FFFFFF; border-radius: 14px; padding: 1rem 1rem 1.4rem; margin-top: 0.4rem; }}
 
     .upload-icon-circle {{
-        width: 54px; height: 54px; border-radius: 50%; background: {TEAL_TINT};
+        width: 54px; height: 54px; border-radius: 50%; background: #FFFFFF;
         display: flex; align-items: center; justify-content: center; margin: 0 auto 0.65rem;
     }}
     .upload-card-title {{ font-weight: 700; color: {INK}; margin-bottom: 0.2rem; }}
     .upload-card-sub {{ color: {MUTED}; font-size: 0.82rem; margin-bottom: 0.8rem; }}
 
-    .section-divider {{
-        background: {TEAL_TINT}; color: {TEAL}; text-align: center; padding: 0.7rem;
-        border-radius: 11px; font-weight: 700; margin: 1.4rem 0 1.2rem; letter-spacing: 0.01em;
-    }}
     .or-divider {{
         display: flex; align-items: center; gap: 0.9rem; color: {MUTED}; font-size: 0.88rem; margin: 1.6rem 0 1.1rem;
     }}
-    .or-divider::before, .or-divider::after {{ content: ""; flex: 1; height: 1px; background: rgba(11,37,69,0.1); }}
+    .or-divider::before, .or-divider::after {{ content: ""; flex: 1; height: 1px; background: {BORDER}; }}
 
     .info-bar {{
         display: flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -514,33 +536,38 @@ st.markdown(
     }}
 
     /* ---- Ask form controls ---- */
+    /* The main question box styled as a soft rounded "pill" CTA — the
+       primary way farmers start a request. */
+    div.st-key-ask_text_wrap .stTextArea textarea {{
+        border-radius: 24px !important; border: 1.5px solid {BORDER} !important;
+        background: #FFFFFF !important; padding: 1.1rem 1.4rem !important;
+        box-shadow: 0 2px 12px rgba(15, 42, 61, 0.04) !important; font-size: 1rem !important;
+    }}
+    div.st-key-ask_text_wrap .stTextArea textarea:focus {{
+        border-color: {TEAL} !important; box-shadow: 0 0 0 3px {TEAL_TINT} !important;
+    }}
     div.st-key-ask_submit button {{
-        background: linear-gradient(135deg, #14B8A6, #0D9488); border: none; border-radius: 999px;
-        box-shadow: 0 6px 16px rgba(20, 184, 166, 0.32);
+        background: {TEAL}; border: none; border-radius: 999px; color: white;
+        box-shadow: 0 6px 16px {TEAL_TINT};
     }}
-    div.st-key-ask_submit button:hover {{ box-shadow: 0 8px 20px rgba(20, 184, 166, 0.42); }}
-    div.st-key-quick_image_hint button, div.st-key-quick_audio_hint button {{
-        background: {BG}; border: 1px solid rgba(11, 37, 69, 0.08); border-radius: 50%;
-        width: 42px; height: 42px; padding: 0;
-    }}
-    div.st-key-quick_image_hint button:hover, div.st-key-quick_audio_hint button:hover {{
-        background: {TEAL_TINT}; border-color: {TEAL};
-    }}
-    div.st-key-save_response_btn button {{ border-radius: 999px; }}
+    div.st-key-ask_submit button:hover {{ background: {TEAL_HOVER}; box-shadow: 0 8px 20px {TEAL_TINT}; }}
+    div.st-key-save_response_btn button {{ border-radius: 999px; background: {TEAL}; border: none; }}
+    div.st-key-save_response_btn button:hover {{ background: {TEAL_HOVER}; }}
     div.st-key-remove_audio_btn button {{
-        background: transparent; border: none; color: #C0392B; font-weight: 500;
+        background: transparent; border: none; color: {RED}; font-weight: 500;
         font-size: 0.82rem; padding: 0.3rem; margin-top: 0.3rem; box-shadow: none;
     }}
-    div.st-key-remove_audio_btn button:hover {{ background: rgba(192, 57, 43, 0.08); transform: none; }}
+    div.st-key-remove_audio_btn button:hover {{ background: {RED_TINT}; transform: none; }}
     .stTextArea textarea {{ border-radius: 14px; }}
     [data-testid="stFileUploaderDropzone"] {{ border-radius: 12px; }}
 
     /* ---- Saved response items ---- */
     div[class*="st-key-saved_item_"] {{
         border-radius: 12px !important; margin-bottom: 0.6rem !important; padding: 0.85rem !important;
+        background: #FFFFFF !important; border-color: {BORDER} !important;
         transition: box-shadow 0.15s ease;
     }}
-    div[class*="st-key-saved_item_"]:hover {{ box-shadow: 0 3px 12px rgba(11, 37, 69, 0.08); }}
+    div[class*="st-key-saved_item_"]:hover {{ box-shadow: 0 3px 12px rgba(15, 42, 61, 0.08); }}
 
     /* ---- Footer ---- */
     .app-footer {{ color: {MUTED}; }}
@@ -598,7 +625,16 @@ with main_col:
             unsafe_allow_html=True,
         )
 
-        st.markdown('<div class="section-divider">লিখিত তথ্য দিন</div>', unsafe_allow_html=True)
+        with st.container(key="ask_text_wrap"):
+            st.text_area(
+                "প্রশ্ন",
+                placeholder="এখানে আপনার পশুর সমস্যাটি লিখুন...",
+                key="ask_text",
+                height=130,
+                label_visibility="collapsed",
+            )
+
+        st.markdown('<div class="or-divider">অথবা</div>', unsafe_allow_html=True)
 
         img_col, audio_col = st.columns(2)
         with img_col:
@@ -640,30 +676,13 @@ with main_col:
                         st.session_state.audio_version += 1
                         st.rerun()
 
-        st.markdown('<div class="or-divider">অথবা লিখিতভাবে জানান</div>', unsafe_allow_html=True)
-
-        st.text_area(
-            "প্রশ্ন",
-            placeholder="এখানে আপনার প্রশ্ন লিখুন...",
-            key="ask_text",
-            height=130,
-            label_visibility="collapsed",
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+        submitted = st.button(
+            "জমা দিন", key="ask_submit", icon=":material/send:", type="primary", use_container_width=True
         )
 
-        icon_col1, icon_col2, _spacer_col, submit_col = st.columns([0.7, 0.7, 4.2, 1.8])
-        with icon_col1:
-            if st.button(" ", key="quick_image_hint", icon=":material/photo_camera:", help="ছবি যোগ করুন"):
-                st.toast("উপরের 'ছবি যোগ করুন' কার্ড ব্যবহার করুন।", icon="📷")
-        with icon_col2:
-            if st.button(" ", key="quick_audio_hint", icon=":material/mic:", help="অডিও রেকর্ড করুন"):
-                st.toast("উপরের 'অডিও রেকর্ড করুন' কার্ড ব্যবহার করুন।", icon="🎙️")
-        with submit_col:
-            submitted = st.button(
-                "জমা দিন", key="ask_submit", icon=":material/send:", type="primary", use_container_width=True
-            )
-
         st.markdown(
-            f'<div class="info-bar">{icon("info", color=MUTED, size=15)} আরেকটি মনে রাখবেন যে AI ভুল করতে পারে</div>',
+            f'<div class="info-bar">{icon("info", color=MUTED, size=15)} মনে রাখবেন, AI ভুল করতে পারে</div>',
             unsafe_allow_html=True,
         )
 
@@ -675,6 +694,9 @@ with main_col:
                 with st.spinner("AI উত্তর তৈরি করছে..."):
                     response_text = api_client.generate(text_val, images_val, audio_val)
                 st.session_state.chat_response = response_text
+                st.session_state.chat_prompt = text_val or None
+                st.session_state.chat_had_image = bool(images_val)
+                st.session_state.chat_had_audio = audio_val is not None
                 st.session_state.response_saved = False
             except api_client.ApiError as exc:
                 st.session_state.chat_response = None
@@ -683,8 +705,15 @@ with main_col:
         if st.session_state.get("chat_response"):
             st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
             with st.container(key="response_card", border=True):
+                severity = classify_severity(st.session_state.chat_response)
                 st.markdown(
-                    f"<p style='font-weight:700;color:{INK};margin-bottom:0.6rem;'>AI-এর পরামর্শ</p>",
+                    f"""
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                                gap:0.6rem;margin-bottom:0.6rem;flex-wrap:wrap;">
+                        <p style="font-weight:700;color:{INK};margin:0;">AI-এর পরামর্শ</p>
+                        {render_severity_badge(severity)}
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
                 st.markdown(st.session_state.chat_response)
@@ -699,7 +728,13 @@ with main_col:
                         open_login_dialog()
                     else:
                         try:
-                            api_client.save_response(token, st.session_state.chat_response)
+                            api_client.save_response(
+                                token,
+                                st.session_state.chat_response,
+                                prompt=st.session_state.chat_prompt,
+                                had_image=st.session_state.chat_had_image,
+                                had_audio=st.session_state.chat_had_audio,
+                            )
                             st.session_state.response_saved = True
                             st.rerun()
                         except api_client.SessionExpiredError as exc:

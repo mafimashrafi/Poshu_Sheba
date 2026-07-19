@@ -96,11 +96,22 @@ def generate(text: str, images: list, audio) -> str:
     return response.json()["response"]
 
 
-def save_response(token: str, response_text: str) -> dict[str, Any]:
+def save_response(
+    token: str,
+    response_text: str,
+    prompt: Optional[str] = None,
+    had_image: bool = False,
+    had_audio: bool = False,
+) -> dict[str, Any]:
     try:
         response = requests.post(
             f"{API_URL}/save-response",
-            json={"response": response_text},
+            json={
+                "response": response_text,
+                "prompt": prompt,
+                "had_image": had_image,
+                "had_audio": had_audio,
+            },
             headers={"Authorization": f"Bearer {token}"},
             timeout=TIMEOUT,
         )
