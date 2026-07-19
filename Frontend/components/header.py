@@ -17,7 +17,7 @@ def _mask_phone(phone: str) -> str:
     return phone[-4:].rjust(len(phone), "•")
 
 
-def render_header(on_open_login: Callable[[], None]) -> None:
+def render_header(on_open_login: Callable[[], None], on_open_profile: Callable[[], None]) -> None:
     logged_in = bool(st.session_state.get("token"))
     ratios = [3.2, 6.4, 1.6] if logged_in else [3.2, 5.2, 2.8]
 
@@ -55,6 +55,13 @@ def render_header(on_open_login: Callable[[], None]) -> None:
                 )
                 with st.popover(label, icon=":material/account_circle:", use_container_width=True):
                     st.caption(st.session_state.get("phone_number", ""))
+                    if st.button(
+                        "প্রোফাইল আপডেট",
+                        key="header_profile",
+                        icon=":material/manage_accounts:",
+                        use_container_width=True,
+                    ):
+                        on_open_profile()
                     if st.button(
                         "লগ আউট",
                         key="header_logout",

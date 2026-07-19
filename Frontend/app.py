@@ -78,6 +78,118 @@ def login_dialog() -> None:
                     st.error(exc.message)
 
 
+@st.dialog("প্রোফাইল ও খামার আপডেট")
+def profile_dialog() -> None:
+    token = st.session_state.get("token")
+    if not token:
+        st.error("সেশন পাওয়া যায়নি। অনুগ্রহ করে আবার লগ ইন করুন।")
+        return
+
+    if "profile_data" not in st.session_state or st.session_state.get("profile_data_refetched") is not True:
+        try:
+            with st.spinner("প্রোফাইল লোড হচ্ছে..."):
+                st.session_state.profile_data = api_client.get_profile(token)
+                st.session_state.profile_data_refetched = True
+        except api_client.ApiError as exc:
+            st.error(exc.message)
+            return
+
+    profile = st.session_state.profile_data
+
+    name = st.text_input("নাম", value=profile.get("name") or "", placeholder="আপনার নাম লিখুন")
+    address = st.text_input("ঠিকানা", value=profile.get("address") or "", placeholder="আপনার ঠিকানা লিখুন")
+    email = st.text_input("ইমেইল (ঐচ্ছিক)", value=profile.get("email") or "", placeholder="আপনার ইমেইল লিখুন")
+    profile_pic = st.text_input("প্রোফাইল ছবির লিংক (ঐচ্ছিক)", value=profile.get("profile_picture_url") or "", placeholder="ছবির ইউআরএল দিন")
+
+    st.markdown("### খামারের তথ্য (ফসল ও পশুর বিবরণ)")
+
+    farms = profile.get("farms") or []
+    updated_farms = []
+
+    for idx, farm in enumerate(farms):
+        col_type, col_count, col_del = st.columns([5, 3, 2], vertical_alignment="bottom")
+        with col_type:
+            animal_type = st.text_input(f"পশুর ধরণ #{idx+1}", value=farm.get("animal_type") or "", key=f"farm_type_{idx}")
+        with col_count:
+            count = st.number_input(f"সংখ্যা #{idx+1}", value=int(farm.get("count") or 1), min_value=1, step=1, key=f"farm_count_{idx}")
+        with col_del:
+            is_deleted = st.checkbox("মুছুন", key=f"farm_delete_{idx}")
+
+        if not is_deleted and animal_type.strip():
+            updated_farms.append({"animal_type": animal_type.strip(), "count": count})
+
+    st.markdown("---")
+    st.markdown("**নতুন পশুর তথ্য যোগ করুন:**")
+    new_col_type, new_col_count = st.columns([6, 4])
+    with new_col_type:
+        new_animal_type = st.text_input("পশুর ধরণ (যেমন: গরু, ছাগল)", key="new_farm_type_input")
+    with new_col_count:
+        new_count = st.number_input("সংখ্যা", value=1, min_value=1, step=1, key="new_farm_count_input")
+
+    st.markdown("---")
+
+    show_confirm = st.session_state.get("show_delete_confirm", False)
+
+    if show_confirm:
+        st.warning("আপনি কি নিশ্চিত যে আপনি আপনার অ্যাকাউন্ট এবং সমস্ত সেভ করা উত্তর মুছে ফেলতে চান? এটি আর ফেরত আনা যাবে না।")
+        del_col1, del_col2 = st.columns(2)
+        with del_col1:
+            if st.button("হ্যাঁ, মুছে ফেলুন", key="confirm_delete_btn", type="primary", use_container_width=True):
+                try:
+                    with st.spinner("অ্যাকাউন্ট মুছে ফেলা হচ্ছে..."):
+                        api_client.delete_account(token)
+                    st.session_state.token = None
+                    st.session_state.phone_number = None
+                    st.session_state.display_name = None
+                    st.session_state.nav_page = "home"
+                    st.session_state.show_delete_confirm = False
+                    st.session_state.profile_data = None
+                    st.session_state.profile_data_refetched = False
+                    st.success("অ্যাকাউন্টটি মুছে ফেলা হয়েছে।")
+                    st.rerun()
+                except api_client.ApiError as exc:
+                    st.error(exc.message)
+        with del_col2:
+            if st.button("না, বাতিল করুন", key="cancel_delete_btn", use_container_width=True):
+                st.session_state.show_delete_confirm = False
+                # No st.rerun() here to keep the dialog open and go back to the profile form
+    else:
+        col_save, col_delete = st.columns([7, 3])
+        with col_save:
+            if st.button("তথ্য সংরক্ষণ করুন", key="profile_save_btn", type="primary", use_container_width=True):
+                payload = {
+                    "name": name.strip() or None,
+                    "address": address.strip(),
+                    "email": email.strip() or None,
+                    "profile_picture_url": profile_pic.strip() or None,
+                    "farms": updated_farms
+                }
+
+                if new_animal_type.strip():
+                    payload["farms"].append({"animal_type": new_animal_type.strip(), "count": int(new_count)})
+
+                if not payload["address"]:
+                    st.error("ঠিকানা ফাঁকা রাখা যাবে না।")
+                    return
+
+                try:
+                    with st.spinner("সংরক্ষণ করা হচ্ছে..."):
+                        api_client.update_profile(token, payload)
+                    st.session_state.display_name = payload["name"] or None
+                    st.session_state.profile_data_refetched = False
+                    st.toast("প্রোফাইল সফলভাবে আপডেট করা হয়েছে!", icon="✅")
+                    st.rerun()
+                except api_client.ApiError as exc:
+                    st.error(exc.message)
+
+        with col_delete:
+            if st.button("অ্যাকাউন্ট মুছুন", key="profile_delete_btn", type="secondary", use_container_width=True):
+                st.session_state.show_delete_confirm = True
+                # No st.rerun() here to keep the dialog open and switch to confirmation view
+
+
+
+
 # -----------------------------
 # Styling
 # -----------------------------
@@ -215,10 +327,16 @@ def open_login_dialog() -> None:
     login_dialog()
 
 
+def open_profile_dialog() -> None:
+    # Clear delete confirm flag when opening the dialog
+    st.session_state.show_delete_confirm = False
+    profile_dialog()
+
+
 # -----------------------------
 # Header
 # -----------------------------
-render_header(on_open_login=open_login_dialog)
+render_header(on_open_login=open_login_dialog, on_open_profile=open_profile_dialog)
 render_walking_cow()
 
 # -----------------------------

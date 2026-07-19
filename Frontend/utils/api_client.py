@@ -129,3 +129,56 @@ def get_saved_responses(token: str) -> list[dict[str, Any]]:
     if response.status_code != 200:
         raise ApiError(_detail(response, "সংরক্ষিত উত্তর লোড করা যায়নি।"))
     return response.json()["responses"]
+
+
+def get_profile(token: str) -> dict[str, Any]:
+    try:
+        response = requests.get(
+            f"{API_URL}/profile",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code == 401:
+        raise SessionExpiredError("আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। আবার লগ ইন করুন।")
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "প্রোফাইল তথ্য লোড করা যায়নি।"))
+    return response.json()
+
+
+def update_profile(token: str, profile_data: dict) -> dict[str, Any]:
+    try:
+        response = requests.put(
+            f"{API_URL}/profile",
+            json=profile_data,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code == 401:
+        raise SessionExpiredError("আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। আবার লগ ইন করুন।")
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "প্রোফাইল আপডেট করা যায়নি।"))
+    return response.json()
+
+
+def delete_account(token: str) -> dict[str, Any]:
+    try:
+        response = requests.delete(
+            f"{API_URL}/profile",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+    except requests.exceptions.RequestException:
+        raise ApiError(CONNECTION_ERROR)
+
+    if response.status_code == 401:
+        raise SessionExpiredError("আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। আবার লগ ইন করুন।")
+    if response.status_code != 200:
+        raise ApiError(_detail(response, "অ্যাকাউন্ট মুছে ফেলা সম্ভব হয়নি।"))
+    return response.json()
+
