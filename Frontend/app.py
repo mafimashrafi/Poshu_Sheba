@@ -267,9 +267,11 @@ st.markdown(
     [data-testid="stAppViewContainer"] {{ background: {BG}; }}
 
     /* ---- Redesigned Profile Dialog Modals ---- */
-    div[data-testid="stDialog"] div[class*="stDialog"] {{
-        max-width: 780px !important;
-        width: 780px !important;
+    div[data-testid="stDialog"] div[role="dialog"],
+    div[data-testid="stDialog"] div[class*="stDialog"],
+    div[role="dialog"] {{
+        max-width: 820px !important;
+        width: 820px !important;
     }}
 
     div[class*="st-key-profile_save_btn"] button {{
@@ -335,6 +337,25 @@ st.markdown(
     }}
     div[class*="st-key-profile_pic_uploader"] label {{
         display: none !important;
+    }}
+
+    /* Light pastel input styling for Profile Dialog inputs */
+    div[data-testid="stTextInput"] input, 
+    div[data-testid="stNumberInput"] input {{
+        background-color: #F0FDFA !important;
+        border: 1px solid #CCFBF1 !important;
+        border-radius: 8px !important;
+        padding: 0.55rem 0.8rem !important;
+        color: #0F766E !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div[data-testid="stTextInput"] input:focus, 
+    div[data-testid="stNumberInput"] input:focus {{
+        background-color: #FFFFFF !important;
+        border-color: #14B8A6 !important;
+        color: #0F2942 !important;
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15) !important;
     }}
 
     #MainMenu, header[data-testid="stHeader"], footer {{ visibility: hidden; height: 0; }}
