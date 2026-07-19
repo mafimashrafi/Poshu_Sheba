@@ -78,7 +78,7 @@ def login_dialog() -> None:
                     st.error(exc.message)
 
 
-@st.dialog("প্রোফাইল ও খামার আপডেট")
+@st.dialog("প্রোফাইল ও খামার আপডেট", width="large")
 def profile_dialog() -> None:
     token = st.session_state.get("token")
     if not token:
@@ -157,34 +157,51 @@ def profile_dialog() -> None:
                     st.error(exc.message)
 
     with col_right:
-        name = st.text_input("নাম", value=profile.get("name") or "", placeholder="আপনার নাম লিখুন")
-        address = st.text_input("ঠিকানা", value=profile.get("address") or "", placeholder="আপনার ঠিকানা লিখুন")
-        email = st.text_input("ইমেইল (ঐচ্ছিক)", value=profile.get("email") or "", placeholder="আপনার ইমেইল লিখুন")
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div style="color: #0F766E; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+                    👤 ব্যক্তিগত তথ্য
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            name = st.text_input("নাম", value=profile.get("name") or "", placeholder="আপনার নাম লিখুন")
+            address = st.text_input("ঠিকানা", value=profile.get("address") or "", placeholder="আপনার ঠিকানা লিখুন")
+            email = st.text_input("ইমেইল (ঐচ্ছিক)", value=profile.get("email") or "", placeholder="আপনার ইমেইল লিখুন")
 
-        st.markdown("### খামারের তথ্য (ফসল ও পশুর বিবরণ)")
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div style="color: #0F766E; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+                    🚜 খামারের তথ্য (ফসল ও পশুর বিবরণ)
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-        farms = profile.get("farms") or []
-        updated_farms = []
+            farms = profile.get("farms") or []
+            updated_farms = []
 
-        for idx, farm in enumerate(farms):
-            col_type, col_count, col_del = st.columns([5, 3, 2], vertical_alignment="bottom")
-            with col_type:
-                animal_type = st.text_input(f"পশুর ধরণ #{idx+1}", value=farm.get("animal_type") or "", key=f"farm_type_{idx}")
-            with col_count:
-                count = st.number_input(f"সংখ্যা #{idx+1}", value=int(farm.get("count") or 1), min_value=1, step=1, key=f"farm_count_{idx}")
-            with col_del:
-                is_deleted = st.checkbox("মুছুন", key=f"farm_delete_{idx}")
+            for idx, farm in enumerate(farms):
+                col_type, col_count, col_del = st.columns([5, 3, 2], vertical_alignment="bottom")
+                with col_type:
+                    animal_type = st.text_input(f"পশুর ধরণ #{idx+1}", value=farm.get("animal_type") or "", key=f"farm_type_{idx}")
+                with col_count:
+                    count = st.number_input(f"সংখ্যা #{idx+1}", value=int(farm.get("count") or 1), min_value=1, step=1, key=f"farm_count_{idx}")
+                with col_del:
+                    is_deleted = st.checkbox("মুছুন", key=f"farm_delete_{idx}")
 
-            if not is_deleted and animal_type.strip():
-                updated_farms.append({"animal_type": animal_type.strip(), "count": count})
+                if not is_deleted and animal_type.strip():
+                    updated_farms.append({"animal_type": animal_type.strip(), "count": count})
 
-        st.markdown("---")
-        st.markdown("**নতুন পশুর তথ্য যোগ করুন:**")
-        new_col_type, new_col_count = st.columns([6, 4])
-        with new_col_type:
-            new_animal_type = st.text_input("পশুর ধরণ (যেমন: গরু, ছাগল)", key="new_farm_type_input")
-        with new_col_count:
-            new_count = st.number_input("সংখ্যা", value=1, min_value=1, step=1, key="new_farm_count_input")
+            st.markdown("---")
+            st.markdown("**নতুন পশুর তথ্য যোগ করুন:**")
+            new_col_type, new_col_count = st.columns([6, 4])
+            with new_col_type:
+                new_animal_type = st.text_input("পশুর ধরণ (যেমন: গরু, ছাগল)", key="new_farm_type_input")
+            with new_col_count:
+                new_count = st.number_input("সংখ্যা", value=1, min_value=1, step=1, key="new_farm_count_input")
 
         st.markdown("---")
 
@@ -267,13 +284,55 @@ st.markdown(
     [data-testid="stAppViewContainer"] {{ background: {BG}; }}
 
     /* ---- Redesigned Profile Dialog Modals ---- */
+    div[role="dialog"],
     div[data-testid="stDialog"] div[role="dialog"],
     div[data-testid="stDialog"] div[class*="stDialog"],
-    div[role="dialog"] {{
-        max-width: 880px !important;
-        width: 880px !important;
+    div[class*="stDialog"] {{
+        max-width: 780px !important;
+        width: 90vw !important;
+        margin: 0 auto !important;
     }}
 
+    /* Hide popover dropdown body completely when the dialog is open in DOM */
+    body:has(div[role="dialog"]) div[data-testid="stPopoverBody"],
+    body:has(div[role="dialog"]) div[class*="stPopoverBody"],
+    body:has(div[data-testid="stDialog"]) div[data-testid="stPopoverBody"],
+    body:has(div[data-testid="stDialog"]) div[class*="stPopoverBody"] {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }}
+
+    /* Popover Menu Dropdown Animation */
+    @keyframes fadeSlideDown {{
+        from {{
+            opacity: 0;
+            transform: translateY(-8px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+    }}
+    div[data-testid="stPopoverBody"],
+    div[class*="stPopoverBody"] {{
+        animation: fadeSlideDown 0.2s ease-out !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px rgba(11, 37, 69, 0.1) !important;
+    }}
+
+    /* Themed container cards inside the profile dialog */
+    div[role="dialog"] div[data-testid="stVerticalBlockBorderContainer"] {{
+        background-color: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
+        border-left: 4px solid #14B8A6 !important;
+        border-radius: 12px !important;
+        padding: 1.2rem !important;
+        margin-bottom: 1.2rem !important;
+        box-shadow: 0 2px 8px rgba(11, 37, 69, 0.02) !important;
+    }}
+
+    /* Button and File Uploader animations */
     div[class*="st-key-profile_save_btn"] button {{
         background-color: #14B8A6 !important;
         color: white !important;
@@ -338,6 +397,13 @@ st.markdown(
     div[class*="st-key-profile_pic_uploader"] label {{
         display: none !important;
     }}
+    div[class*="st-key-profile_pic_uploader"] button {{
+        transition: all 0.2s ease-in-out !important;
+    }}
+    div[class*="st-key-profile_pic_uploader"] button:hover {{
+        transform: scale(1.02) !important;
+        box-shadow: 0 4px 12px rgba(11, 37, 69, 0.1) !important;
+    }}
 
     /* Light pastel input styling for Profile Dialog inputs */
     div[data-testid="stTextInput"] input, 
@@ -356,6 +422,15 @@ st.markdown(
         border-color: #14B8A6 !important;
         color: #0F2942 !important;
         box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15) !important;
+    }}
+
+    /* Number input stepper button hover state transition */
+    div[role="dialog"] button[data-testid*="InputStep"] {{
+        transition: all 0.18s ease-in-out !important;
+    }}
+    div[role="dialog"] button[data-testid*="InputStep"]:hover {{
+        background-color: #E2E8F0 !important;
+        color: #14B8A6 !important;
     }}
 
     #MainMenu, header[data-testid="stHeader"], footer {{ visibility: hidden; height: 0; }}
