@@ -50,12 +50,20 @@ def classify_severity(text: str) -> str:
     return "mild"
 
 
+def get_severity_accent(level: str) -> str:
+    """Return the accent color for the given severity level (e.g. for a card border)."""
+    return _LEVELS.get(level, _LEVELS["mild"])["color"]
+
+
 def render_severity_badge(level: str) -> str:
-    """Return an inline-styled HTML pill for the given severity level."""
+    """Return an inline-styled HTML chip for the given severity level."""
     spec = _LEVELS.get(level, _LEVELS["mild"])
     return (
-        f'<span style="display:inline-flex;align-items:center;gap:0.35rem;'
+        f'<span style="display:inline-flex;align-items:center;gap:0.4rem;'
         f'background:{spec["bg"]};color:{spec["color"]};font-weight:700;'
-        f'font-size:0.8rem;padding:0.35rem 0.75rem;border-radius:999px;">'
-        f'{icon(spec["icon"], color=spec["color"], size=15)}{spec["label"]}</span>'
+        f'font-size:0.78rem;padding:0.3rem 0.7rem 0.3rem 0.4rem;border-radius:999px;'
+        f'border:1px solid {spec["color"]}33;">'
+        f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+        f'width:20px;height:20px;border-radius:50%;background:#FFFFFF;">'
+        f'{icon(spec["icon"], color=spec["color"], size=12)}</span>{spec["label"]}</span>'
     )

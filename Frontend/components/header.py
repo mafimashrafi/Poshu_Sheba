@@ -19,12 +19,27 @@ def _mask_phone(phone: str) -> str:
     return phone[-4:].rjust(len(phone), "•")
 
 
-def render_header(on_open_login: Callable[[], None], on_open_profile: Callable[[], None]) -> None:
+def render_header(
+    on_open_login: Callable[[], None],
+    on_open_profile: Callable[[], None],
+    on_toggle_sidebar: Callable[[], None],
+    sidebar_open: bool = False,
+) -> None:
     logged_in = bool(st.session_state.get("token"))
-    ratios = [3.2, 6.4, 1.6] if logged_in else [3.2, 5.2, 2.8]
+    ratios = [0.5, 3.0, 6.0, 1.6] if logged_in else [0.5, 3.0, 4.7, 2.8]
 
     with st.container(key="app_header"):
-        logo_col, _spacer_col, account_col = st.columns(ratios, vertical_alignment="center")
+        toggle_col, logo_col, _spacer_col, account_col = st.columns(ratios, vertical_alignment="center")
+
+        with toggle_col:
+            with st.container(key="sidebar_toggle_wrap"):
+                st.button(
+                    "",
+                    key="sidebar_toggle_btn",
+                    icon=":material/menu_open:" if sidebar_open else ":material/menu:",
+                    help="ইতিহাস সাইডবার দেখান/লুকান",
+                    on_click=on_toggle_sidebar,
+                )
 
         with logo_col:
             with st.container(key="logo_brand"):

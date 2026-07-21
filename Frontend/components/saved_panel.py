@@ -1,4 +1,10 @@
-"""Right-hand panel: locked prompt for guests, saved responses list for members."""
+"""Saved-responses panel: locked prompt for guests, saved responses list for members.
+
+Rendered in two places at once when the sidebar is open (compact, in the
+sidebar) and the user is on the full "saved" page (non-compact, in the main
+area) — every Streamlit element key here is namespaced by `compact` so the
+two instances never collide.
+"""
 
 from datetime import datetime
 from typing import Callable
@@ -26,7 +32,9 @@ def _format_timestamp(raw: str) -> str:
 
 
 def render_saved_panel(on_open_login: Callable[[], None], compact: bool = True) -> None:
-    with st.container(key="saved_panel"):
+    ns = "compact" if compact else "full"
+
+    with st.container(key=f"saved_panel_{ns}"):
         st.markdown(
             f"""
             <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
@@ -39,7 +47,7 @@ def render_saved_panel(on_open_login: Callable[[], None], compact: bool = True) 
 
         token = st.session_state.get("token")
         if not token:
-            _render_locked(on_open_login)
+            _render_locked(on_open_login, ns)
             return
 
         try:
@@ -49,7 +57,7 @@ def render_saved_panel(on_open_login: Callable[[], None], compact: bool = True) 
             st.session_state.phone_number = None
             st.session_state.display_name = None
             st.warning(exc.message)
-            _render_locked(on_open_login)
+            _render_locked(on_open_login, ns)
             return
         except api_client.ApiError as exc:
             st.error(exc.message)
@@ -60,17 +68,23 @@ def render_saved_panel(on_open_login: Callable[[], None], compact: bool = True) 
             return
 
         limit = 5 if compact else len(responses)
+        preview_len = 70 if compact else 140
         for item in responses[:limit]:
             preview = item["response"].strip().replace("\n", " ")
-            if len(preview) > 140:
-                preview = preview[:140].rstrip() + "…"
-            with st.container(key=f"saved_item_{item['response_id']}", border=True):
+            if len(preview) > preview_len:
+                preview = preview[:preview_len].rstrip() + "…"
+            with st.container(key=f"saved_item_{ns}_{item['response_id']}", border=True):
                 st.markdown(f"<p style='color:{INK};font-size:0.88rem;margin:0;'>{preview}</p>", unsafe_allow_html=True)
                 st.caption(_format_timestamp(item["created_at"]))
 
+        if compact and len(responses) > limit:
+            if st.button("সব দেখুন", key=f"saved_view_all_{ns}", use_container_width=True):
+                st.session_state.nav_page = "saved"
+                st.rerun()
 
-def _render_locked(on_open_login: Callable[[], None]) -> None:
-    with st.container(key="saved_locked"):
+
+def _render_locked(on_open_login: Callable[[], None], ns: str) -> None:
+    with st.container(key=f"saved_locked_{ns}"):
         st.markdown(
             f"""
             <div style="display:flex;justify-content:center;margin:1.2rem 0 1rem;">
@@ -87,7 +101,7 @@ def _render_locked(on_open_login: Callable[[], None]) -> None:
         )
         st.button(
             "লগ ইন করুন",
-            key="saved_login_cta",
+            key=f"saved_login_cta_{ns}",
             type="primary",
             use_container_width=True,
             on_click=on_open_login,

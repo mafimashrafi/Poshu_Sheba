@@ -1,6 +1,6 @@
 import streamlit as st
 
-from components.badges import classify_severity, render_severity_badge
+from components.badges import classify_severity, get_severity_accent, render_severity_badge
 from components.header import render_header
 from components.mascot import render_walking_cow
 from components.saved_panel import render_saved_panel
@@ -37,10 +37,15 @@ _DEFAULTS = {
     "chat_had_audio": False,
     "response_saved": False,
     "audio_version": 0,
+    "sidebar_open": False,
 }
 for _key, _value in _DEFAULTS.items():
     if _key not in st.session_state:
         st.session_state[_key] = _value
+
+
+def toggle_sidebar() -> None:
+    st.session_state.sidebar_open = not st.session_state.sidebar_open
 
 
 # -----------------------------
@@ -303,14 +308,26 @@ st.markdown(
         div.st-key-app_header {{ padding: 0.7rem 1rem !important; }}
     }}
 
-    /* ---- Redesigned Profile Dialog Modals ---- */
+    /* ---- Redesigned Profile Dialog Modals ----
+       IMPORTANT: only scope sizing to the inner `[role="dialog"]` element.
+       Streamlit's own full-viewport modal backdrop (`[data-testid="stDialog"]`,
+       position:fixed;inset:0) also carries a class containing "stDialog", so a
+       selector like `[class*="stDialog"]` matches the backdrop too — shrinking
+       its width/margin turns the full-screen dim overlay into a narrow dark
+       vertical band around the dialog card. Keeping the selector scoped to
+       `[role="dialog"]` avoids resizing the backdrop. */
     div[role="dialog"],
-    div[data-testid="stDialog"] div[role="dialog"],
-    div[data-testid="stDialog"] div[class*="stDialog"],
-    div[class*="stDialog"] {{
+    div[data-testid="stDialog"] div[role="dialog"] {{
         max-width: 780px !important;
         width: 90vw !important;
         margin: 0 auto !important;
+    }}
+
+    /* Soften the dialog card's default shadow to match the app's other soft,
+       navy-tinted card shadows instead of the heavier default. */
+    div[data-testid="stDialog"] > div {{
+        box-shadow: 0 16px 40px rgba(15, 42, 61, 0.16) !important;
+        border-radius: 20px !important;
     }}
 
     /* Hide popover dropdown body completely when the dialog is open in DOM */
@@ -468,6 +485,12 @@ st.markdown(
         background: #FFFFFF; border-radius: 18px; padding: 0.8rem 1.4rem; margin-bottom: 1.8rem;
         box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
     }}
+    div.st-key-sidebar_toggle_wrap button {{
+        background: transparent !important; border: none !important; box-shadow: none !important;
+        color: {INK} !important; border-radius: 10px !important; padding: 0.5rem !important;
+        min-width: auto !important;
+    }}
+    div.st-key-sidebar_toggle_wrap button:hover {{ background: {MINT} !important; color: {TEAL} !important; transform: none !important; }}
     div.st-key-logo_brand {{ position: relative; }}
     div.st-key-logo_brand .st-key-logo_home_btn {{
         position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
@@ -505,7 +528,7 @@ st.markdown(
     }}
 
     /* ---- Cards ---- */
-    div.st-key-reminder_card, div.st-key-saved_panel, div.st-key-card_image, div.st-key-card_audio,
+    div[class*="st-key-saved_panel_"], div.st-key-card_image, div.st-key-card_audio,
     div.st-key-response_card {{
         background: {MINT}; border-radius: 18px; padding: 1.35rem 1.25rem;
         box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
@@ -516,7 +539,7 @@ st.markdown(
     div.st-key-card_image:hover, div.st-key-card_audio:hover {{
         box-shadow: 0 8px 24px rgba(15, 42, 61, 0.09); transform: translateY(-2px);
     }}
-    div.st-key-saved_locked {{ background: #FFFFFF; border-radius: 14px; padding: 1rem 1rem 1.4rem; margin-top: 0.4rem; }}
+    div[class*="st-key-saved_locked_"] {{ background: #FFFFFF; border-radius: 14px; padding: 1rem 1rem 1.4rem; margin-top: 0.4rem; }}
 
     .upload-icon-circle {{
         width: 54px; height: 54px; border-radius: 50%; background: #FFFFFF;
@@ -569,8 +592,26 @@ st.markdown(
     }}
     div[class*="st-key-saved_item_"]:hover {{ box-shadow: 0 3px 12px rgba(15, 42, 61, 0.08); }}
 
+    /* ---- Response card severity accent ---- */
+    div.st-key-response_card {{ border-left-width: 4px !important; border-left-style: solid !important; transition: border-color 0.2s ease; }}
+
     /* ---- Footer ---- */
-    .app-footer {{ color: {MUTED}; }}
+    .app-footer {{
+        margin-top: 2.2rem; padding-top: 1.4rem;
+        border-top: 1px solid {BORDER};
+    }}
+    .app-footer-brand {{ display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.6rem; }}
+    .app-footer-dot {{ width: 6px; height: 6px; border-radius: 50%; background: {TEAL}; display: inline-block; }}
+    .app-footer-links {{
+        display: flex; align-items: center; justify-content: center; gap: 0.9rem;
+        color: {MUTED}; font-size: 0.85rem; flex-wrap: wrap;
+    }}
+    .app-footer-links a {{ color: {MUTED}; text-decoration: none; transition: color 0.15s ease; }}
+    .app-footer-links a:hover {{ color: {TEAL}; }}
+    .app-footer-sep {{ color: {BORDER}; }}
+    .app-footer-meta {{
+        text-align: center; color: {MUTED}; font-size: 0.76rem; margin-top: 0.6rem; opacity: 0.85;
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -590,7 +631,12 @@ def open_profile_dialog() -> None:
 # -----------------------------
 # Header
 # -----------------------------
-render_header(on_open_login=open_login_dialog, on_open_profile=open_profile_dialog)
+render_header(
+    on_open_login=open_login_dialog,
+    on_open_profile=open_profile_dialog,
+    on_toggle_sidebar=toggle_sidebar,
+    sidebar_open=st.session_state.sidebar_open,
+)
 
 if st.session_state.get("show_profile_dialog"):
     st.session_state.show_profile_dialog = False
@@ -602,12 +648,9 @@ render_walking_cow()
 # Body layout
 # -----------------------------
 nav_page = st.session_state.nav_page
-sidebar_col, main_col, saved_col = st.columns([1.05, 3.0, 1.15], gap="large")
 
-with sidebar_col:
-    render_sidebar()
 
-with main_col:
+def render_main_content() -> None:
     if nav_page == "home":
         leaf = icon("leaf", color=TEAL, size=22)
         st.markdown(
@@ -707,6 +750,10 @@ with main_col:
             with st.container(key="response_card", border=True):
                 severity = classify_severity(st.session_state.chat_response)
                 st.markdown(
+                    f"<style>div.st-key-response_card {{ border-left-color: {get_severity_accent(severity)} !important; }}</style>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
                     f"""
                     <div style="display:flex;align-items:center;justify-content:space-between;
                                 gap:0.6rem;margin-bottom:0.6rem;flex-wrap:wrap;">
@@ -767,21 +814,39 @@ with main_col:
             unsafe_allow_html=True,
         )
 
-with saved_col:
-    if nav_page == "home":
-        render_saved_panel(open_login_dialog, compact=True)
+if st.session_state.sidebar_open:
+    sidebar_col, main_col = st.columns([1.1, 3.5], gap="large")
+    with sidebar_col:
+        render_sidebar(open_login_dialog)
+    with main_col:
+        render_main_content()
+else:
+    # No sidebar: center the chat column instead of letting it stretch to the
+    # full block-container width, keeping the focused, ChatGPT-like feel.
+    _left_pad, centered_col, _right_pad = st.columns([1, 6, 1])
+    with centered_col:
+        render_main_content()
 
 # -----------------------------
 # Footer
 # -----------------------------
-st.markdown("<div style='height:1.6rem'></div>", unsafe_allow_html=True)
-footer_links_col, footer_version_col = st.columns([5, 1])
-with footer_links_col:
-    st.markdown(
-        f"""<p style="text-align:center;color:{MUTED};font-size:0.85rem;">
-        গোপনীয়তা নীতি&nbsp;&nbsp;|&nbsp;&nbsp;শর্তাবলী&nbsp;&nbsp;|&nbsp;&nbsp;যোগাযোগ করুন
-        </p>""",
-        unsafe_allow_html=True,
-    )
-with footer_version_col:
-    st.markdown(f"<p style='color:{MUTED};font-size:0.85rem;text-align:right;'>v1.0.0</p>", unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div class="app-footer">
+        <div class="app-footer-brand">
+            <span style="font-weight:800;color:{INK};font-size:0.95rem;">vet<span style="color:{TEAL};">.ai</span></span>
+            <span class="app-footer-dot"></span>
+            <span style="color:{MUTED};font-size:0.8rem;">পশু সেবা AI</span>
+        </div>
+        <div class="app-footer-links">
+            <a href="#">গোপনীয়তা নীতি</a>
+            <span class="app-footer-sep">•</span>
+            <a href="#">শর্তাবলী</a>
+            <span class="app-footer-sep">•</span>
+            <a href="#">যোগাযোগ করুন</a>
+        </div>
+        <p class="app-footer-meta">© 2025 Poshu Sheba AI &nbsp;·&nbsp; v1.0.0</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
