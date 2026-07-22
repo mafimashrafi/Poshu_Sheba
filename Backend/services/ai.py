@@ -1,7 +1,21 @@
+import os
 from typing import Optional
 import ollama
+from ollama import Client
 from fastapi import HTTPException
 from core import config
+
+# Kaggle tunnel + authenticated proxy (active connection).
+client = Client(
+    host=os.getenv("OLLAMA_HOST", ""),
+    headers={"Authorization": f"Bearer {os.getenv('OLLAMA_API_KEY', '')}"},
+)
+OLLAMA_MODEL = config.OLLAMA_MODEL
+
+# Local Ollama testing: comment out the active `client` and `OLLAMA_MODEL`
+# assignments above, then uncomment the two assignments below.
+# client = Client(host="http://localhost:11434")
+# OLLAMA_MODEL = "gemma3n:e4b-it-q4_K_M"  # Use the tag installed locally.
 
 
 def generate_guidance(
@@ -44,8 +58,9 @@ def generate_guidance(
                       উপসর্গ কতদিন ধরে আছে)।
                     
                     # (Note: In the original, it was 'ন\nপ্রশ্ন' due to the line wrap, let's keep the exact text structure)
-                    ভাষা: তুমি সবসময় শুধুমাত্র বাংলায় উত্তর দেবে, ইংরেজি বা অন্য কোনো ভাষায় ন
-                    প্রশ্ন ইংরেজিতে বা অন্য ভাষায় করা হলেও।''']
+                    ভাষা: তুমি সবসময় শুধুমাত্র বাংলায় উত্তর দেবে, ইংরেজি বা অন্য কোনো ভাষায় নয়
+                    প্রশ্ন ইংরেজিতে বা অন্য ভাষায় করা হলেও। 
+                    বাংলাদেশে নানান ধর্মের মানুষ থাকে তায় সুরতে কোন প্রকার ধর্মীয় শুবেচ্ছা যেমন নমস্কার, সালাম ব্যাবহার না করে স্বাগতম বলবে।''']
     if text:
         content_parts.append(text)
     if audio_transcript:
@@ -62,7 +77,7 @@ def generate_guidance(
         message["images"] = images_b64
 
     try:
-        response = ollama.chat(model=config.OLLAMA_MODEL, messages=[
+        response = client.chat(model=OLLAMA_MODEL, messages=[
             message])
     except ollama.ResponseError as e:
         raise HTTPException( status_code=e.status_code or 502, detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}", )
