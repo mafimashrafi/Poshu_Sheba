@@ -50,12 +50,12 @@ def render_header(
                 with brand_text:
                     st.markdown(
                         f"""
-                        <div style="line-height:1.15;">
+                        <div style="line-height:1.25;">
                             <span style="font-size:1.4rem;font-weight:800;color:{INK};letter-spacing:-0.01em;">
                                 vet<span style="color:{theme.PRIMARY};">.ai</span>
                             </span><br/>
-                            <span style="font-size:0.6rem;letter-spacing:0.08em;color:{MUTED};font-weight:600;">
-                                SMART CARE. HEALTHIER PETS.
+                            <span style="font-size:0.72rem;letter-spacing:0.01em;color:{MUTED};font-weight:600;">
+                                পশু স্বাস্থ্য সেবা AI
                             </span>
                         </div>
                         """,

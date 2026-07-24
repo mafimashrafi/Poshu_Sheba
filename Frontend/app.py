@@ -845,7 +845,7 @@ st.markdown(
             <span class="app-footer-sep">•</span>
             <a href="#">যোগাযোগ করুন</a>
         </div>
-        <p class="app-footer-meta">© 2025 Poshu Sheba AI &nbsp;·&nbsp; v1.0.0</p>
+        <p class="app-footer-meta">© 2026 Poshu Sheba AI</p>
     </div>
     """,
     unsafe_allow_html=True,
