@@ -41,4 +41,4 @@ def render_sidebar(on_open_login: Callable[[], None]) -> None:
             st.rerun()
 
     st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
-    st.caption("© 2025 Poshu Sheba AI")
+    st.caption("© 2026 Poshu Sheba AI")
