@@ -128,7 +128,6 @@ def generate_guidance(
                     প্রশ্ন ইংরেজিতে বা অন্য ভাষায় করা হলেও। 
                     বাংলাদেশে নানান ধর্মের মানুষ থাকে তায় সুরতে কোন প্রকার ধর্মীয় শুবেচ্ছা যেমন নমস্কার, সালাম ব্যাবহার না করে স্বাগতম বলবে।''']
     
-    # Combine text inputs for keyword matching
     query_parts = []
     if text:
         query_parts.append(text)
@@ -136,7 +135,6 @@ def generate_guidance(
         query_parts.append(audio_transcript)
     combined_query_text = " ".join(query_parts)
 
-    # Perform matching step
     matched_entries = match_knowledge_base(combined_query_text, animal_type)
 
     # If there are matches, format them and append to content_parts
@@ -182,12 +180,9 @@ def generate_guidance(
             )
         )
 
-    # Print the FULL final prompt content being sent (debug log)
     import sys
-    print("\n--- DEBUG: FULL PROMPT SENT TO GEMMA 4 ---")
     sys.stdout.flush()
     try:
-        print(content)
         sys.stdout.flush()
     except UnicodeEncodeError:
         try:
@@ -196,23 +191,20 @@ def generate_guidance(
             print() # Print newline
             sys.stdout.flush()
         except Exception:
-            print(content.encode("utf-8", errors="replace").decode("ascii", errors="replace"))
+            raise HTTPException(content.encode("utf-8", errors="replace").decode("ascii", errors="replace"))
             sys.stdout.flush()
-    print("------------------------------------------\n")
     sys.stdout.flush()
-
-    response = client.models.generate_content(
-        model=config.GEMMA_MODEL,
-        contents=parts,
-    )
 
     try:
         response = client.models.generate_content(
             model=config.GEMMA_MODEL,
-            contents=content,
+            contents=parts,
         )
     except Exception as e:
-        print("GEMINI ERROR:", repr(e))  # add this line temporarily
-        raise HTTPException(status_code=502,
-                            detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}")
+        print("GEMINI ERROR:", repr(e))
+        raise HTTPException(
+            status_code=502,
+            detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}"
+        )
+
     return response.text
