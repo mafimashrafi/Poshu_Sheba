@@ -1,22 +1,11 @@
-import os
 from typing import Optional
-import ollama
-from ollama import Client
+from google import genai
 from fastapi import HTTPException
 from core import config
+from google.genai import types
+import base64
 
-# Kaggle tunnel + authenticated proxy (active connection).
-client = Client(
-    host=os.getenv("OLLAMA_HOST", ""),
-    headers={"Authorization": f"Bearer {os.getenv('OLLAMA_API_KEY', '')}"},
-)
-OLLAMA_MODEL = config.OLLAMA_MODEL
-
-# Local Ollama testing: comment out the active `client` and `OLLAMA_MODEL`
-# assignments above, then uncomment the two assignments below.
-# client = Client(host="http://localhost:11434")
-# OLLAMA_MODEL = "gemma3n:e4b-it-q4_K_M"  # Use the tag installed locally.
-
+client = genai.Client(api_key=config.GEMINI_API_KEY)
 
 def generate_guidance(
     text: Optional[str],
@@ -72,15 +61,30 @@ def generate_guidance(
             f"Bengali speech and reply entirely in Bengali]: {audio_transcript}")
     content = "\n\n".join(content_parts)
 
-    message = {"role": "user", "content": content}
-    if images_b64:
-        message["images"] = images_b64
+    parts = [
+        types.Part.from_text(text=content)
+    ]
+
+    for img in images_b64:
+        parts.append(
+            types.Part.from_bytes(
+                data=base64.b64decode(img),
+                mime_type="image/jpeg"
+            )
+        )
+
+    response = client.models.generate_content(
+        model=config.GEMMA_MODEL,
+        contents=parts,
+    )
 
     try:
-        response = client.chat(model=OLLAMA_MODEL, messages=[
-            message])
-    except ollama.ResponseError as e:
-        raise HTTPException( status_code=e.status_code or 502, detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}", )
-    except ollama.RequestError as e:
-        raise HTTPException( status_code=503, detail=f"AI পর্যন্ত কল যায়নি। বিকল্প উপায় দেখুন।\n{str(e)}", )
-    return response["message"]["content"]
+        response = client.models.generate_content(
+            model=config.GEMMA_MODEL,
+            contents=content,
+        )
+    except Exception as e:
+        print("GEMINI ERROR:", repr(e))  # add this line temporarily
+        raise HTTPException(status_code=502,
+                            detail=f"এই মুহূর্তে AI সাহায্য করতে পারছে না। বিকল্প উপায় দেখুন বা আবার চেষ্টা করুন।\n{str(e)}")
+    return response.text
