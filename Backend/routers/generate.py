@@ -13,6 +13,7 @@ async def generate(
     text: Optional[str] = Form(None),
     images: list[UploadFile] = File(default=[]),
     audio: UploadFile | None = File(default=None),
+    animal_type: Optional[str] = Form(None),
 ):
     """Generate preliminary veterinary support guidance."""
     if not text and not images and not audio:
@@ -39,5 +40,5 @@ async def generate(
                 detail=f"অডিও প্রসেস করায় সমস্যা হয়েছে। দয়া করে কথায় লিখুন। \n {str(e)}",
             )
 
-    response_text = generate_guidance(text, images_b64, audio_transcript)
+    response_text = generate_guidance(text, images_b64, audio_transcript, animal_type)
     return {"response": response_text}
