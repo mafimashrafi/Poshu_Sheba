@@ -45,3 +45,5 @@ htmlcov/
 
 *.tmp
 *.swp
+
+.junie
