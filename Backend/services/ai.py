@@ -1,7 +1,7 @@
 from typing import Optional
 from google import genai
 from fastapi import HTTPException
-from core import config
+from Backend.core import config
 from google.genai import types
 import base64
 import json

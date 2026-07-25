@@ -4,7 +4,7 @@ from typing import Any, AsyncIterator, Optional
 from fastapi import FastAPI
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-from core.config import MONGODB_URI, MONGODB_DB
+from Backend.core.config import MONGODB_URI, MONGODB_DB
 
 
 @asynccontextmanager

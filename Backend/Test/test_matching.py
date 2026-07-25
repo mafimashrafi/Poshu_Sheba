@@ -5,7 +5,7 @@ from pathlib import Path
 backend_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from services.ai import match_knowledge_base
+from Backend.services.ai import match_knowledge_base
 
 def run_tests():
     print("Starting keyword matching logic tests...\n")

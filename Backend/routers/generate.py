@@ -2,8 +2,8 @@ import base64
 from typing import Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from services.audio import AudioConversionError, transcribe_audio
-from services.ai import generate_guidance
+from Backend.services.audio import AudioConversionError, transcribe_audio
+from Backend.services.ai import generate_guidance
 
 router = APIRouter()
 
