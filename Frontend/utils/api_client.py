@@ -4,14 +4,17 @@ Every function raises ApiError with a ready-to-display Bangla message on
 failure, so UI code never has to parse response bodies itself.
 """
 
+import os
 from typing import Any, Optional
 
 import requests
 
-API_URL = "http://127.0.0.1:8000"
+# In production, set BACKEND_URL env var to the deployed backend URL (e.g. Railway).
+# Falls back to localhost for local development.
+API_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 TIMEOUT = 60
-# /generate transcribes audio (faster-whisper) and runs the Ollama model, which can
-# take minutes on CPU or on a cold model load. A short timeout here surfaces as a
+# /generate transcribes audio (faster-whisper) and calls the Gemini API, which can
+# take a while on the first request. A short timeout here would surface as a
 # generic "can't connect" error even though the backend is working fine.
 GENERATE_TIMEOUT = 300
 
