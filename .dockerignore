@@ -1,0 +1,11 @@
+Frontend/
+.git
+.gitignore
+__pycache__/
+*.pyc
+.env
+.env.example
+README.md
+Procfile
+venv/
+.venv/
