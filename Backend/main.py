@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from Backend.db.mongodb import lifespan
-from Backend.routers import auth, responses, generate
+from db.mongodb import lifespan
+from routers import auth, responses, generate
 
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
