@@ -8,9 +8,9 @@ from fastapi import APIRouter, HTTPException, Request, status, Depends, UploadFi
 from pymongo.errors import DuplicateKeyError
 
 from typing import Annotated, Any
-from Backend.models.user import UserRegisterRequest, LoginRequest, ProfileUpdateRequest
-from Backend.core.security import hash_password, verify_password, hash_session_token
-from Backend.routers.responses import require_active_session
+from models.user import UserRegisterRequest, LoginRequest, ProfileUpdateRequest
+from core.security import hash_password, verify_password, hash_session_token
+from routers.responses import require_active_session
 
 router = APIRouter()
 
