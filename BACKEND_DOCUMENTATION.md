@@ -122,13 +122,14 @@ The access token is returned only in this response. Use it with protected routes
 
 Generates preliminary Bengali veterinary guidance. Authentication is not required.
 
-The endpoint accepts `multipart/form-data` and requires at least one of the following fields:
+The endpoint accepts `multipart/form-data` and requires at least one of `info`, `text`, `images`, or `audio` to be present.
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `text` | text | Written description of the animal’s condition |
-| `images` | repeatable file field | One or more images for visual context |
-| `audio` | file | A Bengali audio recording describing the issue |
+| `info` | text (JSON-encoded string, optional) | Structured intake data collected via the frontend's mandatory form fields — animal age, fever status, and stool/urine status. Sent as a form field whose *value* is a JSON string (see below), since the request as a whole is `multipart/form-data` and cannot carry a nested JSON body directly. |
+| `text` | text (optional) | Freeform written description of the animal's condition, in addition to `info` |
+| `images` | repeatable file field (optional) | One or more images for visual context |
+| `audio` | file (optional) | A Bengali audio recording describing the issue |
 | `animal_type` | text (optional) | Optional animal selector value (`cow`, `goat`, `chicken`, or `duck`) used to filter matched disease profiles |
 
 Successful response: `200 OK`
@@ -137,9 +138,43 @@ Successful response: `200 OK`
 {"response":"AI-generated Bengali veterinary guidance"}
 ```
 
-Images are base64-encoded and passed to the model. Audio is converted to 16 kHz mono WAV with FFmpeg, transcribed by the local Whisper `small` model, then included with the user’s input. 
+#### `info` field format
 
-Before querying the Gemini API, the backend performs a keyword matching step: it combines the `text` and `audio` transcript inputs, then does case-insensitive substring matching against the symptoms list in `Backend/data/disease_knowledge_base.json` (filtering by the requested `animal_type` if provided). Any matching disease entries are formatted in Bengali as a reliable information source block and appended to the prompt to ground the generated response. If no matching diseases are found, the model falls back to its general reasoning but is instructed in the system prompt to explicitly clarify that its advice is a general assessment, not a confirmed diagnosis. The model is prompted to respond only in Bengali, restrict itself to animal-health topics, use clear language, describe likely causes and immediate steps, identify urgent warning signs, and encourage consultation with a veterinarian when appropriate.
+The frontend now collects three pieces of intake information through a form — age, fever status, and stool/urine status — rather than leaving them to freeform text. This is because the model reliably asks for these three details before it can give an accurate assessment, so they are now captured directly instead of being inferred from prose.
+
+These three values are packaged client-side into a JSON object and sent as the *string value* of the `info` form field:
+
+```json
+{
+  "age": 3,
+  "fever": "উচ্চ তাপমাত্রা",
+  "stool_urine": "স্বাভাবিক"
+}
+```
+
+Example raw multipart body for the `info` field:
+
+```
+------WebKitFormBoundaryXXXX
+Content-Disposition: form-data; name="info"
+
+{"age": 3, "fever": "উচ্চ তাপমাত্রা", "stool_urine": "স্বাভাবিক"}
+------WebKitFormBoundaryXXXX
+```
+
+`age` is sent as a JSON number; `fever` and `stool_urine` are sent as Bengali strings drawn from a fixed set of frontend selectbox options (rather than arbitrary free text), which keeps the values consistent for keyword matching. The backend parses this string with `json.loads()` immediately on receipt. If `info` is present but is not valid JSON, the backend returns `400` with a Bengali error message rather than passing malformed data further into the pipeline.
+
+Once parsed into a Python dict, `info` is used in two ways:
+- Its values are joined into the combined text used for the disease knowledge-base keyword match (see below), alongside `text` and the audio transcript.
+- It is formatted as a `key: value` block and appended to the Gemini prompt as the user's structured intake data, distinct from `text`.
+
+#### What the frontend must now do
+
+The frontend (Streamlit) collects age, fever status, and stool/urine status via explicit form controls (e.g. `st.number_input` for age, `st.selectbox` for fever and stool/urine) rather than a single freeform text box. Before submitting, it JSON-encodes these three values into a single object and sends that object as the `info` field's value alongside the existing `text`, `images`, `audio`, and `animal_type` fields, all within the same `multipart/form-data` request. The request shape and endpoint otherwise remain unchanged — this only affects how `info` is populated and encoded.
+
+Images are base64-encoded and passed to the model. Audio is converted to 16 kHz mono WAV with FFmpeg, transcribed by the local Whisper `small` model, then included with the user's input. 
+
+Before querying the Gemini API, the backend performs a keyword matching step: it combines the parsed `info` values, `text`, and `audio` transcript inputs, then does case-insensitive substring matching against the symptoms list in `Backend/data/disease_knowledge_base.json` (filtering by the requested `animal_type` if provided). Any matching disease entries are formatted in Bengali as a reliable information source block and appended to the prompt to ground the generated response. If no matching diseases are found, the model falls back to its general reasoning but is instructed in the system prompt to explicitly clarify that its advice is a general assessment, not a confirmed diagnosis. The model is prompted to respond only in Bengali, restrict itself to animal-health topics, use clear language, describe likely causes and immediate steps, identify urgent warning signs, and encourage consultation with a veterinarian when appropriate.
 
 ### `POST /save-response`
 
@@ -206,7 +241,7 @@ Passwords use salted `scrypt` hashes. The database never stores plaintext passwo
 
 | Status | Meaning |
 | --- | --- |
-| `400` | `/generate` received no text, image, or audio input |
+| `400` | `/generate` received no `info`, `text`, image, or audio input, or the `info` field's value was not valid JSON |
 | `401` | Login failed, or a protected request has no valid unexpired bearer token |
 | `409` | The phone number already has an account |
 | `422` | The request does not match validation requirements |
