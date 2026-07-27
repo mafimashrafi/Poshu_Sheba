@@ -1,7 +1,7 @@
 from typing import Optional
 from google import genai
 from fastapi import HTTPException
-from Backend.core import config
+from core import config
 from google.genai import types
 import base64
 import json
@@ -40,13 +40,10 @@ def match_knowledge_base(
     
     for entry in KNOWLEDGE_BASE:
         entry_animal = entry.get("animal", "").lower()
-        
-        # 1. Animal filtering
+
         if animal_type:
-            # Normalize requested animal type
             norm_animal = animal_type.lower()
-            
-            # Map input to standard keys
+
             mapped_animal = None
             for key, keywords in animal_keywords.items():
                 if norm_animal == key or norm_animal in keywords:
@@ -58,8 +55,6 @@ def match_knowledge_base(
             elif not mapped_animal and norm_animal not in entry_animal:
                 continue
         else:
-            # If no animal type is explicitly provided, check if the text mentions any known animals.
-            # If the text mentions animals, and the entry's animal is NOT among them, skip this entry.
             mentioned_animals = []
             for key, keywords in animal_keywords.items():
                 if any(kw in text_lower for kw in keywords):
@@ -83,6 +78,7 @@ def match_knowledge_base(
 
 
 def generate_guidance(
+    info: dict,
     text: Optional[str],
     images_b64: list[str],
     audio_transcript: Optional[str],
@@ -129,6 +125,8 @@ def generate_guidance(
                     বাংলাদেশে নানান ধর্মের মানুষ থাকে তায় সুরতে কোন প্রকার ধর্মীয় শুবেচ্ছা যেমন নমস্কার, সালাম ব্যাবহার না করে স্বাগতম বলবে।''']
     
     query_parts = []
+    if info:
+        query_parts.append(" ".join(str(v) for v in info.values()))
     if text:
         query_parts.append(text)
     if audio_transcript:
@@ -156,7 +154,9 @@ def generate_guidance(
             + "\n".join(formatted_list)
         )
         content_parts.append(matched_block)
-    
+    if info:
+        info_block = "\n".join(f"{k}: {v}" for k, v in info.items())
+        content_parts.append(f"ব্যবহারকারীর দেওয়া তথ্য:\n{info_block}")
     if text:
         content_parts.append(text)
     if audio_transcript:
