@@ -47,3 +47,5 @@ htmlcov/
 *.swp
 
 .junie/
+
+run.txt

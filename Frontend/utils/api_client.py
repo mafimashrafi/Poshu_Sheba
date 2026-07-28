@@ -4,6 +4,7 @@ Every function raises ApiError with a ready-to-display Bangla message on
 failure, so UI code never has to parse response bodies itself.
 """
 
+import json
 import os
 from typing import Any, Optional
 
@@ -72,9 +73,25 @@ def login(phone_number: str, password: str) -> dict[str, Any]:
     return response.json()
 
 
-def generate(text: str, images: list, audio) -> str:
-    if not text and not images and audio is None:
+def generate(
+    info: Optional[dict],
+    text: str,
+    images: list,
+    audio,
+    animal_type: Optional[str] = None,
+) -> str:
+    if not info and not text and not images and audio is None:
         raise ApiError("লিখিত তথ্য, ছবি অথবা অডিও এর যেকোনো একটি দিন।")
+
+    # The request is multipart/form-data, so the structured intake data
+    # (age, fever, stool_urine) travels as a JSON string in the `info` field.
+    data: dict[str, str] = {}
+    if info:
+        data["info"] = json.dumps(info, ensure_ascii=False)
+    if text:
+        data["text"] = text
+    if animal_type:
+        data["animal_type"] = animal_type
 
     files: list[tuple[str, tuple[str, bytes, str]]] = []
     for image in images:
@@ -85,7 +102,7 @@ def generate(text: str, images: list, audio) -> str:
     try:
         response = requests.post(
             f"{API_URL}/generate",
-            data={"text": text} if text else None,
+            data=data or None,
             files=files or None,
             timeout=GENERATE_TIMEOUT,
         )
