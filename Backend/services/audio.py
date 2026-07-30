@@ -13,10 +13,24 @@ class AudioConversionError(Exception):
     """Raised when ffmpeg fails to convert the uploaded audio to WAV."""
 
 
-def _convert_to_wav(raw_audio: bytes, original_filename: str) -> str:
+def _fallback_extension(content_type: Optional[str]) -> str:
+    mime = (content_type or "").lower()
+    mapping = {
+        "audio/webm": ".webm",
+        "audio/wav": ".wav",
+        "audio/x-wav": ".wav",
+        "audio/mpeg": ".mp3",
+        "audio/mp4": ".m4a",
+        "audio/m4a": ".m4a",
+        "audio/ogg": ".ogg",
+    }
+    return mapping.get(mime, ".webm")
+
+
+def _convert_to_wav(raw_audio: bytes, original_filename: str, content_type: Optional[str] = None) -> str:
     _, extension = os.path.splitext(original_filename or "")
     if not extension:
-        extension = ".mp3"
+        extension = _fallback_extension(content_type)
 
     input_path = None
     wav_path = None
@@ -67,9 +81,10 @@ def _transcribe_wav(wav_path: str, language: Optional[str] = None) -> str:
 def transcribe_audio(
     raw_audio: bytes,
     filename: str,
+    content_type: Optional[str] = None,
     language: Optional[str] = None,
 ) -> str:
-    wav_path = _convert_to_wav(raw_audio, filename)
+    wav_path = _convert_to_wav(raw_audio, filename, content_type=content_type)
     try:
         return _transcribe_wav(wav_path, language=language)
     finally:

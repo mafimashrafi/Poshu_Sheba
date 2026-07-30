@@ -1,18 +1,13 @@
-# Graph Report - Poshu_Sheba  (2026-07-28)
+# Graph Report - Poshu_Sheba  (2026-07-29)
 
 ## Corpus Check
-- 31 files · ~180,491 words
+- 31 files · ~180,145 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
 - 345 nodes · 404 edges · 36 communities (29 shown, 7 thin omitted)
 - Extraction: 86% EXTRACTED · 13% INFERRED · 1% AMBIGUOUS · INFERRED: 53 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `08a07636`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_AI Guidance Generation Core|AI Guidance Generation Core]]

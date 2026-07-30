@@ -44,11 +44,21 @@ async def generate(
     if audio is not None:
         raw = await audio.read()
         try:
-            audio_transcript = transcribe_audio(raw, audio.filename, language="bn")
+            audio_transcript = transcribe_audio(
+                raw,
+                audio.filename,
+                content_type=audio.content_type,
+                language="bn",
+            )
         except AudioConversionError as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"অডিও প্রসেস করায় সমস্যা হয়েছে। দয়া করে কথায় লিখুন। \n {str(e)}",
+            )
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="অডিও প্রসেস করা যায়নি। অডিও ফাইল দিয়ে আবার চেষ্টা করুন।",
             )
 
     response_text = generate_guidance(info_dict, text, images_b64, audio_transcript, animal_type)
