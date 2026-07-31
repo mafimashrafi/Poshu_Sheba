@@ -522,8 +522,11 @@ st.markdown(
 
     /* ---- Header ---- */
     div.st-key-app_header {{
-        background: #FFFFFF; border-radius: 18px; padding: 0.8rem 1.4rem; margin-bottom: 1.8rem;
-        box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
+        position: sticky; top: 0.6rem; z-index: 20;
+        background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.88) 100%);
+        backdrop-filter: blur(7px);
+        border-radius: 18px; padding: 0.82rem 1.4rem; margin-bottom: 1.8rem;
+        box-shadow: 0 8px 26px rgba(15, 42, 61, 0.08); border: 1px solid {BORDER};
     }}
     div.st-key-sidebar_toggle_wrap button {{
         background: transparent !important; border: none !important; box-shadow: none !important;
@@ -531,6 +534,9 @@ st.markdown(
         min-width: auto !important;
     }}
     div.st-key-sidebar_toggle_wrap button:hover {{ background: {MINT} !important; color: {TEAL} !important; transform: none !important; }}
+    div.st-key-sidebar_toggle_wrap button:focus-visible {{
+        outline: none !important; box-shadow: 0 0 0 3px {TEAL_TINT} !important;
+    }}
     div.st-key-logo_brand {{ position: relative; }}
     div.st-key-logo_brand .st-key-logo_home_btn {{
         position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
@@ -548,6 +554,13 @@ st.markdown(
         box-shadow: 0 6px 16px {TEAL_TINT};
     }}
     div.st-key-header_login button:hover {{ background: {TEAL_HOVER}; box-shadow: 0 8px 20px {TEAL_TINT}; }}
+    [data-testid="stPopoverButton"] {{
+        border-radius: 999px !important; border: 1px solid {BORDER} !important;
+        background: #FFFFFF !important; color: {INK} !important;
+    }}
+    [data-testid="stPopoverButton"]:hover {{
+        border-color: {TEAL} !important; color: {TEAL} !important; background: {MINT} !important;
+    }}
 
     /* ---- Sidebar: "Ask a new question" primary CTA ---- */
     div.st-key-sidebar_ask_cta button {{
@@ -568,30 +581,11 @@ st.markdown(
     }}
 
     /* ---- Cards ---- */
-    div[class*="st-key-saved_panel_"], div.st-key-card_image, div.st-key-card_audio,
-    div.st-key-response_card {{
+    div[class*="st-key-saved_panel_"], div.st-key-response_card {{
         background: {MINT}; border-radius: 18px; padding: 1.35rem 1.25rem;
         box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
     }}
-    div.st-key-card_image, div.st-key-card_audio {{
-        text-align: center; transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }}
-    div.st-key-card_image:hover, div.st-key-card_audio:hover {{
-        box-shadow: 0 8px 24px rgba(15, 42, 61, 0.09); transform: translateY(-2px);
-    }}
     div[class*="st-key-saved_locked_"] {{ background: #FFFFFF; border-radius: 14px; padding: 1rem 1rem 1.4rem; margin-top: 0.4rem; }}
-
-    .upload-icon-circle {{
-        width: 54px; height: 54px; border-radius: 50%; background: #FFFFFF;
-        display: flex; align-items: center; justify-content: center; margin: 0 auto 0.65rem;
-    }}
-    .upload-card-title {{ font-weight: 700; color: {INK}; margin-bottom: 0.2rem; }}
-    .upload-card-sub {{ color: {MUTED}; font-size: 0.82rem; margin-bottom: 0.8rem; }}
-
-    .or-divider {{
-        display: flex; align-items: center; gap: 0.9rem; color: {MUTED}; font-size: 0.88rem; margin: 1.6rem 0 1.1rem;
-    }}
-    .or-divider::before, .or-divider::after {{ content: ""; flex: 1; height: 1px; background: {BORDER}; }}
 
     .info-bar {{
         display: flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -599,7 +593,7 @@ st.markdown(
     }}
 
     /* ---- Animal type pills ---- */
-    div.st-key-animal_pills [data-testid="stPills"] {{ justify-content: center; gap: 0.5rem; }}
+    div.st-key-animal_pills [data-testid="stPills"] {{ justify-content: flex-start; gap: 0.5rem; }}
     div.st-key-animal_pills button {{
         border-radius: 999px !important; border: 1.5px solid {BORDER} !important;
         background: #FFFFFF !important; color: {MUTED} !important; font-weight: 600 !important;
@@ -617,13 +611,35 @@ st.markdown(
     div.st-key-animal_pills button p {{ color: inherit !important; }}
     div.st-key-animal_pills button[aria-checked="true"] p {{ color: #FFFFFF !important; }}
 
-    /* ---- Mandatory intake card (age / fever / stool-urine) ---- */
-    div.st-key-intake_card {{
-        background: #FFFFFF; border-radius: 18px; padding: 1.15rem 1.25rem 0.9rem;
+    /* ---- Unified "ask a question" card ---- */
+    /* Everything the farmer fills in (animal, vitals, description, media)
+       lives inside one card instead of several stacked boxes, so the form
+       reads as a single coherent step rather than a wall of sections. */
+    div.st-key-ask_card {{
+        background: #FFFFFF; border-radius: 20px; padding: 1.2rem 1.6rem 1.3rem;
         box-shadow: 0 2px 16px rgba(15, 42, 61, 0.05); border: 1px solid {BORDER};
-        border-left: 4px solid {TEAL};
     }}
-    div.st-key-intake_card label p {{ color: {MUTED} !important; font-weight: 600 !important; font-size: 0.85rem !important; }}
+    div.st-key-triage_section {{
+        background: linear-gradient(180deg, #FFFFFF 0%, {MINT} 130%);
+        border: 1px solid {BORDER}; border-radius: 16px; padding: 0.35rem 0.95rem 0.9rem;
+        margin-bottom: 0.95rem;
+    }}
+    div.st-key-details_section {{
+        background: #FFFFFF;
+        border: 1px solid {BORDER}; border-radius: 16px; padding: 0.35rem 0.95rem 0.9rem;
+        max-width: 980px; margin: 0 auto 1rem;
+    }}
+    div.st-key-triage_section {{ max-width: 980px; margin-left: auto; margin-right: auto; }}
+    .section-kicker {{
+        color: {TEAL}; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.04em;
+        text-transform: uppercase; margin: 0.45rem 0 0.1rem;
+    }}
+    .section-title {{
+        color: {INK}; font-size: 1.02rem; font-weight: 800; margin: 0 0 0.2rem;
+    }}
+    .section-sub {{
+        color: {MUTED}; font-size: 0.84rem; margin: 0 0 0.05rem;
+    }}
     div[data-testid="stSelectbox"] [data-baseweb="select"] > div {{
         background-color: {MINT} !important; border: 1px solid {BORDER} !important;
         border-radius: 8px !important; transition: all 0.2s ease-in-out !important;
@@ -633,30 +649,21 @@ st.markdown(
         box-shadow: 0 0 0 3px {TEAL_TINT} !important;
     }}
 
-    /* ---- Live input-summary chips ---- */
-    .form-section-label {{
-        text-align: center; color: {INK}; font-weight: 700; font-size: 0.95rem;
+    /* ---- Field labels inside the ask card ---- */
+    .field-label {{
+        color: {INK}; font-weight: 700; font-size: 0.88rem;
         margin: 1.1rem 0 0.55rem;
     }}
-    .input-chips {{
-        display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: center;
-        margin: 0.9rem 0 0.3rem;
-    }}
-    .input-chip {{
-        background: {MINT}; color: {TEAL}; border: 1px solid {BORDER};
-        border-radius: 999px; padding: 0.22rem 0.75rem; font-size: 0.8rem; font-weight: 600;
-        animation: fadeSlideDown 0.2s ease-out;
-    }}
-    .input-chip.chip-missing {{ background: {AMBER_TINT}; color: {AMBER}; border-color: {AMBER}; }}
+    .field-required {{ color: {RED}; font-weight: 700; }}
+    .field-optional {{ color: {MUTED}; font-weight: 500; font-size: 0.8rem; }}
 
     /* ---- Ask form controls ---- */
-    /* The main question box styled as a soft rounded "pill" CTA — the
-       primary way farmers start a request. */
     div.st-key-ask_text_wrap .stTextArea textarea {{
-        border-radius: 24px !important; border: 1.5px solid {BORDER} !important;
-        background: #FFFFFF !important; padding: 1.1rem 1.4rem !important;
-        box-shadow: 0 2px 12px rgba(15, 42, 61, 0.04) !important; font-size: 1rem !important;
+        border-radius: 14px !important; border: 1.5px solid {BORDER} !important;
+        background: {MINT} !important; padding: 0.85rem 1rem !important;
+        box-shadow: none !important; font-size: 0.98rem !important;
     }}
+    div.st-key-ask_text_wrap {{ max-width: 900px; margin: 0 auto; }}
     div.st-key-ask_text_wrap .stTextArea textarea:focus {{
         border-color: {TEAL} !important; box-shadow: 0 0 0 3px {TEAL_TINT} !important;
     }}
@@ -674,6 +681,21 @@ st.markdown(
     div.st-key-remove_audio_btn button:hover {{ background: {RED_TINT}; transform: none; }}
     .stTextArea textarea {{ border-radius: 14px; }}
     [data-testid="stFileUploaderDropzone"] {{ border-radius: 12px; }}
+    div.st-key-media_image_card,
+    div.st-key-media_audio_card {{
+        border: 1px solid {BORDER}; border-radius: 14px; background: #FFFFFF;
+        padding: 0.6rem 0.75rem 0.7rem; min-height: 250px;
+        display: flex; flex-direction: column;
+    }}
+    div.st-key-media_image_card [data-testid="stFileUploaderDropzone"] {{
+        min-height: 156px; display: flex; align-items: center;
+    }}
+    div.st-key-media_audio_card [data-testid="stAudioInput"] {{
+        min-height: 86px;
+    }}
+    div.st-key-media_audio_card div[data-testid="stFileUploaderDropzone"] {{
+        min-height: 64px;
+    }}
 
     /* ---- Saved response items ---- */
     div[class*="st-key-saved_item_"] {{
@@ -740,44 +762,14 @@ st.markdown(
         background: linear-gradient(100deg, {TEAL} 0%, {TEAL_HOVER} 100%);
         -webkit-background-clip: text; background-clip: text; color: transparent;
     }}
-    .hero-sub {{ color: {MUTED}; font-size: 1.02rem; margin: 0 auto; max-width: 34rem; }}
-    .hero-features {{
-        display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1.05rem;
-    }}
-    .hero-feature {{
-        display: inline-flex; align-items: center; gap: 0.4rem;
-        background: {MINT}; border: 1px solid {BORDER}; border-radius: 999px;
-        color: {INK}; font-size: 0.8rem; font-weight: 600; padding: 0.3rem 0.85rem;
+    .hero-sub {{
+        color: {MUTED}; font-size: 1.02rem; margin: 0 auto; max-width: 34rem;
+        text-align: center; line-height: 1.6;
     }}
     @media (max-width: 640px) {{
         .hero-title {{ font-size: 1.6rem; }}
     }}
 
-    /* ---- Numbered section labels ---- */
-    .form-section-label {{ display: flex; align-items: center; justify-content: center; gap: 0.5rem; }}
-    .step-chip {{
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
-        background: {TEAL}; color: #FFFFFF; font-size: 0.72rem; font-weight: 700;
-        box-shadow: 0 3px 8px {TEAL_TINT};
-    }}
-
-    /* ---- "অথবা" divider pill ---- */
-    .or-divider > span {{
-        background: #FFFFFF; border: 1px solid {BORDER}; border-radius: 999px;
-        padding: 0.22rem 0.95rem; font-weight: 600; font-size: 0.82rem;
-        box-shadow: 0 2px 8px rgba(15, 42, 61, 0.05);
-    }}
-
-    /* ---- Upload cards ---- */
-    .upload-icon-circle {{
-        border: 1px solid {BORDER}; box-shadow: 0 0 0 6px {TEAL_TINT};
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }}
-    div.st-key-card_image:hover .upload-icon-circle,
-    div.st-key-card_audio:hover .upload-icon-circle {{
-        transform: scale(1.07); box-shadow: 0 0 0 10px {TEAL_TINT};
-    }}
     [data-testid="stFileUploaderDropzone"] {{
         border: 1.5px dashed {BORDER} !important; background: #FFFFFF !important;
         transition: border-color 0.2s ease, background 0.2s ease;
@@ -786,18 +778,15 @@ st.markdown(
         border-color: {TEAL} !important; background: {TEAL_TINT} !important;
     }}
 
-    /* ---- Example prompt chips ---- */
-    .examples-label {{
-        text-align: center; color: {MUTED}; font-size: 0.8rem;
-        margin: 0.7rem 0 0.35rem; font-weight: 600;
-    }}
+    /* ---- Example prompt chips: compact, unlabeled, secondary weight ---- */
+    div.st-key-example_chips {{ margin-top: 0.5rem; }}
     div.st-key-example_chips .stButton > button {{
-        background: #FFFFFF; border: 1px solid {BORDER}; border-radius: 999px;
-        color: {MUTED}; font-size: 0.82rem; font-weight: 500; padding: 0.4rem 0.8rem;
-        box-shadow: none; white-space: normal; line-height: 1.35; min-height: 2.5rem;
+        background: {MINT}; border: 1px solid {BORDER}; border-radius: 999px;
+        color: {MUTED}; font-size: 0.78rem; font-weight: 500; padding: 0.35rem 0.75rem;
+        box-shadow: none; white-space: normal; line-height: 1.3; min-height: 2.2rem;
     }}
     div.st-key-example_chips .stButton > button:hover {{
-        border-color: {TEAL}; color: {TEAL}; background: {MINT}; transform: translateY(-1px);
+        border-color: {TEAL}; color: {TEAL}; background: {TEAL_TINT}; transform: translateY(-1px);
     }}
 
     /* ---- Submit CTA ---- */
@@ -874,172 +863,122 @@ def render_main_content() -> None:
                 <p class="hero-sub">
                     আপনার পশুর সমস্যা লিখুন, ছবি দিন বা কথা বলুন — আমাদের AI সহকারী দ্রুত পরামর্শ দেবে।
                 </p>
-                <div class="hero-features">
-                    <span class="hero-feature">{icon("camera", color=TEAL, size=14)} ছবি বিশ্লেষণ</span>
-                    <span class="hero-feature">{icon("mic", color=TEAL, size=14)} বাংলা অডিও</span>
-                    <span class="hero-feature">{icon("shield-check", color=TEAL, size=14)} রোগ তথ্যভান্ডারে যাচাই</span>
-                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.markdown(
-            '<p class="form-section-label"><span class="step-chip">১</span>কোন পশুর সমস্যা?</p>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="animal_pills"):
-            st.pills(
-                "পশুর ধরন",
-                options=list(ANIMAL_OPTIONS),
-                key="ask_animal",
-                label_visibility="collapsed",
+        with st.container(key="ask_card", border=True):
+            with st.container(key="details_section"):
+                st.markdown('<p class="field-label">সমস্যার বিবরণ</p>', unsafe_allow_html=True)
+                with st.container(key="ask_text_wrap"):
+                    st.text_area(
+                        "প্রশ্ন",
+                        placeholder="এখানে আপনার পশুর সমস্যাটি লিখুন...",
+                        key="ask_text",
+                        height=110,
+                        label_visibility="collapsed",
+                    )
+
+                st.markdown('<p class="field-label">ছবি বা অডিও <span class="field-optional">(ঐচ্ছিক)</span></p>', unsafe_allow_html=True)
+                img_col, audio_col = st.columns(2)
+                with img_col:
+                    with st.container(key="media_image_card"):
+                        st.file_uploader(
+                            "ছবি যোগ করুন",
+                            type=["png", "jpg", "jpeg"],
+                            accept_multiple_files=True,
+                            key="ask_images",
+                        )
+                with audio_col:
+                    with st.container(key="media_audio_card"):
+                        audio_key = f"ask_audio_{st.session_state.audio_version}"
+                        st.audio_input("অডিও রেকর্ড করুন", key=audio_key)
+                        if st.session_state.get(audio_key) is not None:
+                            if st.button(
+                                "অডিও সরিয়ে ফেলুন",
+                                key="remove_audio_btn",
+                                icon=":material/close:",
+                                use_container_width=True,
+                            ):
+                                st.session_state.audio_version += 1
+                                st.rerun()
+
+            with st.container(key="triage_section"):
+                with st.expander("পশুর ধরন, প্রাথমিক তথ্য ও উদাহরণ", expanded=False):
+                    st.markdown('<p class="section-kicker">Quick Intake</p>', unsafe_allow_html=True)
+                    st.markdown(
+                        '<p class="section-sub">প্রথমে পশু নির্বাচন করুন, তারপর বয়স ও লক্ষণের অবস্থা দিন।</p>',
+                        unsafe_allow_html=True,
+                    )
+
+                    st.markdown('<p class="field-label">পশুর ধরন</p>', unsafe_allow_html=True)
+                    with st.container(key="animal_pills"):
+                        st.pills(
+                            "পশুর ধরন",
+                            options=list(ANIMAL_OPTIONS),
+                            key="ask_animal",
+                            label_visibility="collapsed",
+                        )
+
+                    st.markdown(
+                        f'<p class="field-label">প্রাথমিক তথ্য <span class="field-required">*</span></p>',
+                        unsafe_allow_html=True,
+                    )
+                    col_age, col_fever, col_stool = st.columns(3)
+                    with col_age:
+                        st.number_input(
+                            "বয়স (বছর)",
+                            min_value=0.0,
+                            max_value=40.0,
+                            value=None,
+                            step=0.5,
+                            format="%g",
+                            placeholder="যেমন: ২",
+                            key="ask_age",
+                        )
+                    with col_fever:
+                        st.selectbox(
+                            "জ্বর / শরীরের তাপমাত্রা",
+                            FEVER_OPTIONS,
+                            index=None,
+                            placeholder="বেছে নিন",
+                            key="ask_fever",
+                        )
+                    with col_stool:
+                        st.selectbox(
+                            "পায়খানা / প্রস্রাবের অবস্থা",
+                            STOOL_URINE_OPTIONS,
+                            index=None,
+                            placeholder="বেছে নিন",
+                            key="ask_stool",
+                        )
+
+                    st.markdown('<p class="field-label">উদাহরণ</p>', unsafe_allow_html=True)
+                    with st.container(key="example_chips"):
+                        example_cols = st.columns(len(EXAMPLE_PROMPTS))
+                        for i, (example_col, example) in enumerate(zip(example_cols, EXAMPLE_PROMPTS)):
+                            with example_col:
+                                if st.button(example, key=f"example_chip_{i}", use_container_width=True):
+                                    st.session_state.pending_example = example
+                                    st.rerun()
+
+            age_val = st.session_state.get("ask_age")
+            fever_val = st.session_state.get("ask_fever")
+            stool_val = st.session_state.get("ask_stool")
+            animal_label = st.session_state.get("ask_animal")
+            text_now = (st.session_state.get("ask_text") or "").strip()
+            images_now = st.session_state.get("ask_images") or []
+            audio_now = st.session_state.get(audio_key)
+
+            st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
+            submitted = st.button(
+                "জমা দিন", key="ask_submit", icon=":material/send:", type="primary", use_container_width=True
             )
-
-        st.markdown(
-            '<p class="form-section-label"><span class="step-chip">২</span>পশুর প্রাথমিক তথ্য <span style="color:'
-            f'{RED};">*</span></p>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="intake_card", border=True):
-            col_age, col_fever, col_stool = st.columns(3)
-            with col_age:
-                st.number_input(
-                    "বয়স (বছর)",
-                    min_value=0.0,
-                    max_value=40.0,
-                    value=None,
-                    step=0.5,
-                    format="%g",
-                    placeholder="যেমন: ২",
-                    key="ask_age",
-                )
-            with col_fever:
-                st.selectbox(
-                    "জ্বর / শরীরের তাপমাত্রা",
-                    FEVER_OPTIONS,
-                    index=None,
-                    placeholder="বেছে নিন",
-                    key="ask_fever",
-                )
-            with col_stool:
-                st.selectbox(
-                    "পায়খানা / প্রস্রাবের অবস্থা",
-                    STOOL_URINE_OPTIONS,
-                    index=None,
-                    placeholder="বেছে নিন",
-                    key="ask_stool",
-                )
-
-        st.markdown(
-            '<p class="form-section-label"><span class="step-chip">৩</span>সমস্যার বিবরণ দিন</p>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="ask_text_wrap"):
-            st.text_area(
-                "প্রশ্ন",
-                placeholder="এখানে আপনার পশুর সমস্যাটি লিখুন...",
-                key="ask_text",
-                height=130,
-                label_visibility="collapsed",
+            st.markdown(
+                f'<div class="info-bar">{icon("info", color=MUTED, size=13)} মনে রাখবেন, AI ভুল করতে পারে</div>',
+                unsafe_allow_html=True,
             )
-
-        st.markdown('<p class="examples-label">উদাহরণ — চেপে দেখুন:</p>', unsafe_allow_html=True)
-        with st.container(key="example_chips"):
-            example_cols = st.columns(len(EXAMPLE_PROMPTS))
-            for i, (example_col, example) in enumerate(zip(example_cols, EXAMPLE_PROMPTS)):
-                with example_col:
-                    if st.button(example, key=f"example_chip_{i}", use_container_width=True):
-                        st.session_state.pending_example = example
-                        st.rerun()
-
-        st.markdown('<div class="or-divider"><span>অথবা</span></div>', unsafe_allow_html=True)
-
-        img_col, audio_col = st.columns(2)
-        with img_col:
-            with st.container(key="card_image", border=True):
-                st.markdown(
-                    f"""
-                    <div class="upload-icon-circle">{icon("camera", color=TEAL, size=26)}</div>
-                    <p class="upload-card-title">ছবি যোগ করুন</p>
-                    <p class="upload-card-sub">পশুর সমস্যা বা রোগের ছবি দিন</p>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                st.file_uploader(
-                    "ছবি",
-                    type=["png", "jpg", "jpeg"],
-                    accept_multiple_files=True,
-                    key="ask_images",
-                    label_visibility="collapsed",
-                )
-        with audio_col:
-            with st.container(key="card_audio", border=True):
-                st.markdown(
-                    f"""
-                    <div class="upload-icon-circle">{icon("mic", color=TEAL, size=26)}</div>
-                    <p class="upload-card-title">অডিও রেকর্ড করুন</p>
-                    <p class="upload-card-sub">বাংলায় সমস্যার বিবরণ দিন</p>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                audio_key = f"ask_audio_{st.session_state.audio_version}"
-                st.audio_input("অডিও", key=audio_key, label_visibility="collapsed")
-                if st.session_state.get(audio_key) is not None:
-                    if st.button(
-                        "অডিও সরিয়ে ফেলুন",
-                        key="remove_audio_btn",
-                        icon=":material/close:",
-                        use_container_width=True,
-                    ):
-                        st.session_state.audio_version += 1
-                        st.rerun()
-
-        # Live summary of everything that will be sent — Streamlit reruns on each
-        # widget change, so these chips update as the farmer fills the form.
-        age_val = st.session_state.get("ask_age")
-        fever_val = st.session_state.get("ask_fever")
-        stool_val = st.session_state.get("ask_stool")
-        animal_label = st.session_state.get("ask_animal")
-        text_now = (st.session_state.get("ask_text") or "").strip()
-        images_now = st.session_state.get("ask_images") or []
-        audio_now = st.session_state.get(audio_key)
-
-        chips = []
-        if animal_label:
-            chips.append(f'<span class="input-chip">{animal_label}</span>')
-        chips.append(
-            f'<span class="input-chip">বয়স: {age_val:g} বছর</span>'
-            if age_val is not None
-            else '<span class="input-chip chip-missing">বয়স দিন</span>'
-        )
-        chips.append(
-            f'<span class="input-chip">জ্বর: {fever_val}</span>'
-            if fever_val
-            else '<span class="input-chip chip-missing">জ্বরের অবস্থা বেছে নিন</span>'
-        )
-        chips.append(
-            f'<span class="input-chip">পায়খানা/প্রস্রাব: {stool_val}</span>'
-            if stool_val
-            else '<span class="input-chip chip-missing">পায়খানা/প্রস্রাবের অবস্থা বেছে নিন</span>'
-        )
-        if text_now:
-            chips.append('<span class="input-chip">লিখিত বিবরণ ✓</span>')
-        if images_now:
-            chips.append(f'<span class="input-chip">ছবি: {len(images_now)}টি</span>')
-        if audio_now is not None:
-            chips.append('<span class="input-chip">অডিও ✓</span>')
-        st.markdown(f'<div class="input-chips">{"".join(chips)}</div>', unsafe_allow_html=True)
-
-        st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
-        submitted = st.button(
-            "জমা দিন", key="ask_submit", icon=":material/send:", type="primary", use_container_width=True
-        )
-
-        st.markdown(
-            f'<div class="info-bar">{icon("info", color=MUTED, size=15)} মনে রাখবেন, AI ভুল করতে পারে</div>',
-            unsafe_allow_html=True,
-        )
 
         if submitted:
             missing = []

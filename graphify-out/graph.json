@@ -170,7 +170,7 @@
       "label": "open_login_dialog()",
       "file_type": "code",
       "source_file": "Frontend/app.py",
-      "source_location": "L829",
+      "source_location": "L765",
       "id": "frontend_app_open_login_dialog",
       "community": 1,
       "norm_label": "open_login_dialog()"
@@ -179,7 +179,7 @@
       "label": "open_profile_dialog()",
       "file_type": "code",
       "source_file": "Frontend/app.py",
-      "source_location": "L833",
+      "source_location": "L769",
       "id": "frontend_app_open_profile_dialog",
       "community": 1,
       "norm_label": "open_profile_dialog()"
@@ -188,7 +188,7 @@
       "label": "render_main_content()",
       "file_type": "code",
       "source_file": "Frontend/app.py",
-      "source_location": "L861",
+      "source_location": "L797",
       "id": "frontend_app_render_main_content",
       "community": 1,
       "norm_label": "render_main_content()"
@@ -8018,5 +8018,5 @@
       "source_file": "BACKEND_DOCUMENTATION.md"
     }
   ],
-  "built_at_commit": "08a0763694953ca2f72544e7e61d07606c7d0028"
+  "built_at_commit": "7aa91e1cccc8144fe75fb0414189e4a60259a207"
 }

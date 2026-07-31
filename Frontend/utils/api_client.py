@@ -23,6 +23,25 @@ CONNECTION_ERROR = "সার্ভারের সাথে সংযোগ ক
 TIMEOUT_ERROR = "AI উত্তর তৈরি করতে স্বাভাবিকের চেয়ে বেশি সময় নিচ্ছে। কিছুক্ষণ পর আবার চেষ্টা করুন।"
 
 
+def _guess_audio_filename(audio: Any) -> str:
+    filename = getattr(audio, "name", None) or ""
+    if "." in filename:
+        return filename
+
+    mime = (getattr(audio, "type", "") or "").lower()
+    if mime == "audio/webm":
+        return "recording.webm"
+    if mime == "audio/wav":
+        return "recording.wav"
+    if mime == "audio/mp4" or mime == "audio/m4a":
+        return "recording.m4a"
+    if mime == "audio/mpeg":
+        return "recording.mp3"
+    if mime == "audio/ogg":
+        return "recording.ogg"
+    return "recording.webm"
+
+
 class ApiError(Exception):
     """Carries a Bangla message safe to show directly to the user."""
 
@@ -97,7 +116,9 @@ def generate(
     for image in images:
         files.append(("images", (image.name, image.getvalue(), image.type or "application/octet-stream")))
     if audio is not None:
-        files.append(("audio", (audio.name or "audio.wav", audio.getvalue(), audio.type or "audio/wav")))
+        audio_filename = _guess_audio_filename(audio)
+        audio_mime = audio.type or "application/octet-stream"
+        files.append(("audio", (audio_filename, audio.getvalue(), audio_mime)))
 
     try:
         response = requests.post(
