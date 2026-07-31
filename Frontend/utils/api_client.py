@@ -1,9 +1,3 @@
-"""Thin wrapper around the Poshu Sheba AI FastAPI backend.
-
-Every function raises ApiError with a ready-to-display Bangla message on
-failure, so UI code never has to parse response bodies itself.
-"""
-
 import json
 import os
 from typing import Any, Optional

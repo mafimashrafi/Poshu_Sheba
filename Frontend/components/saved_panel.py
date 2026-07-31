@@ -1,11 +1,3 @@
-"""Saved-responses panel: locked prompt for guests, saved responses list for members.
-
-Rendered in two places at once when the sidebar is open (compact, in the
-sidebar) and the user is on the full "saved" page (non-compact, in the main
-area) — every Streamlit element key here is namespaced by `compact` so the
-two instances never collide.
-"""
-
 from datetime import datetime
 from typing import Callable
 

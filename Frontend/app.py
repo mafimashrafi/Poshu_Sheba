@@ -23,11 +23,6 @@ RED = theme.RED
 RED_TINT = theme.RED_TINT
 BG = theme.BG
 
-# -----------------------------
-# Intake form options
-# -----------------------------
-# Animal selector: Bengali label shown in the UI → English value the backend's
-# knowledge-base filter understands (`animal_type` form field).
 ANIMAL_OPTIONS = {
     "🐄 গরু": "cow",
     "🐐 ছাগল": "goat",
@@ -55,17 +50,12 @@ STOOL_URINE_OPTIONS = [
     "জানি না",
 ]
 
-# One-tap example questions that fill the description box — worded so their
-# symptoms also hit the backend knowledge-base keyword matcher.
 EXAMPLE_PROMPTS = [
     "গরুর মুখে ঘা, লালা ঝরছে",
     "মুরগি ঝিমাচ্ছে, সবুজ পায়খানা করছে",
     "ছাগলের পেট ফুলে গেছে, খাচ্ছে না",
 ]
 
-# -----------------------------
-# Session state
-# -----------------------------
 _DEFAULTS = {
     "token": None,
     "phone_number": None,
@@ -88,9 +78,6 @@ def toggle_sidebar() -> None:
     st.session_state.sidebar_open = not st.session_state.sidebar_open
 
 
-# -----------------------------
-# Login / register modal
-# -----------------------------
 @st.dialog("লগ ইন করুন")
 def login_dialog() -> None:
     tab_login, tab_register = st.tabs(["লগ ইন", "নতুন অ্যাকাউন্ট"])
@@ -324,9 +311,6 @@ def profile_dialog() -> None:
 
 
 
-# -----------------------------
-# Styling
-# -----------------------------
 st.markdown(
     f"""
     <style>
